@@ -1,0 +1,32 @@
+# Marker OCR Dependencies
+marker-pdf[full]>=0.3.0
+
+# Note: PyTorch installed separately in Dockerfile with CUDA 12.4 support
+
+# Transformers for model support
+transformers>=4.30.0
+
+# Web Framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+python-multipart>=0.0.6
+aiofiles>=23.1.0
+jinja2>=3.1.0
+
+# Image Processing
+opencv-python>=4.6.0
+Pillow>=9.5.0
+numpy>=1.24.0
+
+# Utilities
+tqdm>=4.66.1
+requests>=2.31.0
+aiohttp>=3.8.0
+
+# Validation and Environment
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+
+# PDF Generation
+weasyprint>=62.0
+markdown>=3.5.0

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .drag-drop-zone {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .drag-drop-zone:hover, .drag-drop-zone.dragover {
+            background-color: #e7f3ff;
+            border-color: #0056b3;
+        }
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .processing-status {
+            display: none;
+        }
+        .results-section {
+            display: none;
+        }
+        .feature-card {
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Dark mode styles */
+        [data-theme="dark"] {
+            --bs-body-bg: #1a1a1a;
+            --bs-body-color: #e9ecef;
+            --bs-primary: #0d6efd;
+            --bs-secondary: #6c757d;
+            --bs-success: #198754;
+            --bs-info: #0dcaf0;
+            --bs-warning: #ffc107;
+            --bs-danger: #dc3545;
+            --bs-light: #495057;
+            --bs-dark: #212529;
+        }
+        
+        [data-theme="dark"] body {
+            background-color: #1a1a1a;
+            color: #e9ecef;
+        }
+        
+        [data-theme="dark"] .navbar {
+            background-color: #212529 !important;
+        }
+        
+        [data-theme="dark"] .card {
+            background-color: #2d3748;
+            border-color: #4a5568;
+            color: #e9ecef;
+        }
+        
+        [data-theme="dark"] .card-header {
+            background-color: #374151;
+            border-color: #4a5568;
+        }
+        
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select {
+            background-color: #374151;
+            border-color: #4a5568;
+            color: #e9ecef;
+        }
+        
+        [data-theme="dark"] .form-control:focus,
+        [data-theme="dark"] .form-select:focus {
+            background-color: #374151;
+            border-color: #0d6efd;
+            color: #e9ecef;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        [data-theme="dark"] .drag-drop-zone {
+            background-color: #2d3748;
+            border-color: #4a5568;
+            color: #e9ecef;
+        }
+        
+        [data-theme="dark"] .drag-drop-zone:hover,
+        [data-theme="dark"] .drag-drop-zone.dragover {
+            background-color: #374151;
+            border-color: #0d6efd;
+        }
+        
+        [data-theme="dark"] .alert {
+            background-color: #374151;
+            border-color: #4a5568;
+            color: #e9ecef;
+        }
+        
+        [data-theme="dark"] .bg-light {
+            background-color: #2d3748 !important;
+            color: #e9ecef;
+        }
+        
+        [data-theme="dark"] .text-muted {
+            color: #9ca3af !important;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-file-text me-2"></i>Marker OCR Web Interface
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    Advanced Document Processing with AI
+                </span>
+                <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="jumbotron bg-light p-4 rounded">
+                    <h1 class="display-6">
+                        <i class="fas fa-magic text-primary me-3"></i>
+                        Intelligent Document Processing
+                    </h1>
+                    <p class="lead">
+                        Transform your documents with state-of-the-art OCR, AI enhancement, and GPU acceleration.
+                        Upload PDFs, images, and office documents for professional-quality text extraction.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card feature-card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-bolt text-warning fa-2x mb-3"></i>
+                        <h6>GPU Accelerated</h6>
+                        <small class="text-muted">Lightning-fast processing</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card feature-card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-brain text-info fa-2x mb-3"></i>
+                        <h6>AI Enhanced</h6>
+                        <small class="text-muted">LLM-powered accuracy</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card feature-card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-table text-success fa-2x mb-3"></i>
+                        <h6>Smart Tables</h6>
+                        <small class="text-muted">Perfect table detection</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card feature-card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-square-root-alt text-danger fa-2x mb-3"></i>
+                        <h6>Math Equations</h6>
+                        <small class="text-muted">LaTeX formatting</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>Upload Documents
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <!-- File Upload Zone -->
+                            <div class="drag-drop-zone mb-3" id="dropZone">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                <h5>Drag & Drop Files Here</h5>
+                                <p class="text-muted">or click to browse</p>
+                                <input type="file" id="fileInput" name="files" multiple 
+                                       accept=".pdf,.jpg,.jpeg,.png,.webp,.tiff,.bmp,.docx,.pptx,.xlsx,.epub,.mobi,.html"
+                                       style="display: none;">
+                            </div>
+
+                            <!-- File List -->
+                            <div class="file-list mb-3" id="fileList"></div>
+
+                            <!-- Processing Options -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-cog me-2"></i>Output Options</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Output Format</label>
+                                        <select class="form-select" name="output_format">
+                                            <option value="markdown">Markdown</option>
+                                            <option value="html">HTML</option>
+                                            <option value="json">JSON</option>
+                                            <option value="pdf">PDF (from Markdown)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-magic me-2"></i>AI Enhancement</h6>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="use_llm" id="useLLM" checked>
+                                        <label class="form-check-label" for="useLLM">
+                                            Enable LLM Enhancement
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="extract_images" checked>
+                                        <label class="form-check-label">
+                                            Extract Images
+                                        </label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Max Pages (optional)</label>
+                                        <input type="number" class="form-control" name="max_pages" min="1" placeholder="All pages">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- LLM Options (visible by default since LLM is checked) -->
+                            <div id="llmOptions">
+                                <h6><i class="fas fa-robot me-2"></i>LLM Configuration</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">LLM Provider</label>
+                                    <select class="form-select" name="llm_provider" id="llmProvider">
+                                        <option value="ollama">Ollama (Local)</option>
+                                        <option value="gemini">Google Gemini</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Ollama Options -->
+                                <div id="ollamaOptions">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Ollama URL</label>
+                                            <input type="text" class="form-control" name="ollama_url" value="http://host.docker.internal:11434">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Ollama Model</label>
+                                            <input type="text" class="form-control" name="ollama_model" value="gemma3:12b">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Gemini Options -->
+                                <div id="geminiOptions" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Gemini API Key</label>
+                                            <input type="password" class="form-control" name="gemini_api_key" placeholder="Enter your Gemini API key">
+                                            <small class="form-text text-muted">Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Gemini Model</label>
+                                            <select class="form-select" name="gemini_model">
+                                                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
+                                                <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Quality)</option>
+                                                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info mt-2">
+                                        <small><i class="fas fa-info-circle me-1"></i>
+                                        Gemini provides enhanced document understanding with superior handling of complex layouts, tables, and mathematical content.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg mt-3" id="submitBtn">
+                                <i class="fas fa-play me-2"></i>Start Processing
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Panel -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Processing Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="statusPanel">
+                            <p class="text-muted">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Upload files to start processing
+                            </p>
+                        </div>
+                        
+                        <!-- Processing Status -->
+                        <div class="processing-status" id="processingStatus">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Progress</span>
+                                <span id="progressText">0%</span>
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     id="progressBar" style="width: 0%"></div>
+                            </div>
+                            <div id="fileStatus"></div>
+                        </div>
+
+                        <!-- Results Section -->
+                        <div class="results-section" id="resultsSection">
+                            <h6><i class="fas fa-download me-2"></i>Download Results</h6>
+                            <div id="downloadLinks"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-server me-2"></i>System Status
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="systemStatus">Loading...</div>
+                        <hr>
+                        <button class="btn btn-outline-warning btn-sm w-100" onclick="cleanupFiles()">
+                            <i class="fas fa-trash me-2"></i>Clean Up Output Files
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentSessionId = null;
+        let statusInterval = null;
+
+        // DOM elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadForm = document.getElementById('uploadForm');
+        const useLLMCheckbox = document.getElementById('useLLM');
+        const llmOptions = document.getElementById('llmOptions');
+        const llmProvider = document.getElementById('llmProvider');
+        const ollamaOptions = document.getElementById('ollamaOptions');
+        const geminiOptions = document.getElementById('geminiOptions');
+        const processingStatus = document.getElementById('processingStatus');
+        const resultsSection = document.getElementById('resultsSection');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStatus();
+            setupEventListeners();
+            initializeTheme();
+        });
+
+        function setupEventListeners() {
+            // Drag and drop
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+            // File input change
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Form submission
+            uploadForm.addEventListener('submit', handleFormSubmit);
+
+            // LLM toggle
+            useLLMCheckbox.addEventListener('change', function() {
+                llmOptions.style.display = this.checked ? 'block' : 'none';
+            });
+
+            // LLM provider switching
+            llmProvider.addEventListener('change', function() {
+                if (this.value === 'ollama') {
+                    ollamaOptions.style.display = 'block';
+                    geminiOptions.style.display = 'none';
+                } else if (this.value === 'gemini') {
+                    ollamaOptions.style.display = 'none';
+                    geminiOptions.style.display = 'block';
+                }
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            displayFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            displayFiles(e.target.files);
+        }
+
+        function displayFiles(files) {
+            fileList.innerHTML = '';
+            for (let file of files) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'alert alert-info d-flex justify-content-between align-items-center';
+                fileItem.innerHTML = `
+                    <span><i class="fas fa-file me-2"></i>${file.name} (${formatFileSize(file.size)})</span>
+                    <button type="button" class="btn-close" onclick="removeFile(this)"></button>
+                `;
+                fileList.appendChild(fileItem);
+            }
+        }
+
+        function removeFile(button) {
+            button.closest('.alert').remove();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(uploadForm);
+            
+            // Add selected files
+            const files = fileInput.files;
+            if (files.length === 0) {
+                alert('Please select files to upload');
+                return;
+            }
+
+            try {
+                document.getElementById('submitBtn').disabled = true;
+                processingStatus.style.display = 'block';
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentSessionId = result.session_id;
+                    startStatusPolling();
+                } else {
+                    throw new Error(result.message || 'Upload failed');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                document.getElementById('submitBtn').disabled = false;
+                processingStatus.style.display = 'none';
+            }
+        }
+
+        function startStatusPolling() {
+            statusInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/sessions/${currentSessionId}/status`);
+                    const status = await response.json();
+                    updateStatus(status);
+                    
+                    if (status.status === 'completed' || status.status === 'failed') {
+                        clearInterval(statusInterval);
+                        document.getElementById('submitBtn').disabled = false;
+                        
+                        if (status.status === 'completed') {
+                            showResults(status);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Status polling error:', error);
+                }
+            }, 2000);
+        }
+
+        function updateStatus(status) {
+            const progress = (status.processed_files / status.total_files) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            
+            const fileStatus = document.getElementById('fileStatus');
+            fileStatus.innerHTML = `
+                <small class="text-muted">
+                    Processing: ${status.processed_files}/${status.total_files} files<br>
+                    Status: ${status.status}
+                </small>
+            `;
+        }
+
+        function showResults(status) {
+            processingStatus.style.display = 'none';
+            resultsSection.style.display = 'block';
+            
+            const downloadLinks = document.getElementById('downloadLinks');
+            downloadLinks.innerHTML = '';
+            
+            status.files.forEach(file => {
+                if (file.status === 'completed') {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'mb-2';
+                    
+                    let links = '';
+                    if (file.output_files.markdown) {
+                        const mdFileName = file.output_files.markdown.split('/').pop();
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${mdFileName}" class="btn btn-sm btn-outline-primary me-1" download>MD</a>`;
+                    }
+                    if (file.output_files.json) {
+                        const jsonFileName = file.output_files.json.split('/').pop();
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${jsonFileName}" class="btn btn-sm btn-outline-info me-1" download>JSON</a>`;
+                    }
+                    if (file.output_files.html) {
+                        const htmlFileName = file.output_files.html.split('/').pop();
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${htmlFileName}" class="btn btn-sm btn-outline-success me-1" download>HTML</a>`;
+                    }
+                    if (file.output_files && file.output_files.pdf_file) {
+                        const pdfFileName = file.output_files.pdf_file.split('/').pop();
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${pdfFileName}" class="btn btn-sm btn-outline-danger me-1" download>PDF</a>`;
+                    }
+                    
+                    fileDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small>${file.filename}</small>
+                            <div>${links}</div>
+                        </div>
+                    `;
+                    downloadLinks.appendChild(fileDiv);
+                }
+            });
+        }
+
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/health');
+                const status = await response.json();
+                
+                document.getElementById('systemStatus').innerHTML = `
+                    <small>
+                        <div class="d-flex justify-content-between">
+                            <span>Status:</span>
+                            <span class="text-success"><i class="fas fa-check-circle"></i> ${status.status}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>GPU:</span>
+                            <span class="${status.gpu_available ? 'text-success' : 'text-warning'}">
+                                <i class="fas ${status.gpu_available ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                                ${status.gpu_available ? 'Available' : 'CPU Only'}
+                            </span>
+                        </div>
+                    </small>
+                `;
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = `
+                    <small class="text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Status check failed
+                    </small>
+                `;
+            }
+        }
+
+        // Dark mode functionality
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+
+        function toggleDarkMode() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (theme === 'dark') {
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+            }
+        }
+
+        // Cleanup functionality
+        async function cleanupFiles() {
+            if (!confirm('Are you sure you want to delete all output files? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cleanup', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ Output files cleaned up successfully!');
+                    // Reset the interface
+                    processingStatus.style.display = 'none';
+                    resultsSection.style.display = 'none';
+                    fileList.innerHTML = '';
+                    currentSessionId = null;
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                        statusInterval = null;
+                    }
+                } else {
+                    alert('❌ Cleanup failed: ' + result.message);
+                }
+            } catch (error) {
+                alert('❌ Cleanup failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
