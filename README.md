@@ -179,9 +179,12 @@ Configure Gemini for cloud-based processing:
 1. **Get API Key**: Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. **Enter API Key**: Input your key directly in the web interface
 3. **Select Model**:
-   - `gemini-1.5-flash` - Fast processing
-   - `gemini-1.5-pro` - High quality results
-   - `gemini-2.0-flash-exp` - Experimental features
+   - `gemini-2.5-flash-preview-05-20` - Latest with adaptive thinking (Recommended)
+   - `gemini-2.5-pro-preview-05-06` - Advanced reasoning and multimodal understanding
+   - `gemini-2.0-flash` - Stable with next-gen features
+   - `gemini-2.0-flash-lite` - Cost-efficient and low latency
+   - `gemini-1.5-flash` - Fast and versatile (Production stable)
+   - `gemini-1.5-pro` - High quality processing
 
 **Gemini Benefits**:
 - Superior handling of complex layouts and tables
