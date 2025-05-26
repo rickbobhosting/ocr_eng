@@ -77,3 +77,6 @@ test_*.py
 # Backup files
 *_backup.py
 *_old.py
+
+# n8n node development (separate project)
+n8n_node/
