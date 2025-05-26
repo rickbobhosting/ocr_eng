@@ -1,9 +1,13 @@
+# OCR Engine Docker Compose Configuration
+# Supports both local and network access modes
+
 services:
   marker-ocr-web:
     build: .
     container_name: marker-ocr-web
     ports:
-      - "8100:8100"
+      # For network access from other servers, change to: "0.0.0.0:8100:8100"
+      - "${HOST_BIND:-127.0.0.1}:8100:8100"
     volumes:
       - ./outputs:/app/outputs
       - ./uploads:/app/uploads
@@ -11,6 +15,10 @@ services:
     environment:
       - CUDA_VISIBLE_DEVICES=0
       - TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9;9.0
+      # Network configuration (set HOST_BIND=0.0.0.0 for network access)
+      - HOST=${HOST:-127.0.0.1}
+      - PORT=8100
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8100}
     deploy:
       resources:
         reservations:
@@ -25,7 +33,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - ocr-network
 
+# Custom network for better control
 networks:
-  default:
-    name: marker-ocr-network
+  ocr-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1

@@ -1,0 +1,30 @@
+<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="30" cy="30" r="28" fill="url(#gradient)" stroke="#2C5282" stroke-width="2"/>
+  
+  <!-- Document icon -->
+  <rect x="18" y="12" width="24" height="32" rx="2" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+  
+  <!-- Text lines representing OCR text -->
+  <line x1="22" y1="18" x2="34" y2="18" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="22" y1="22" x2="38" y2="22" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="22" y1="26" x2="32" y2="26" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="22" y1="30" x2="36" y2="30" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="22" y1="34" x2="30" y2="34" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- OCR scanning beam effect -->
+  <rect x="16" y="38" width="28" height="2" fill="#F56565" opacity="0.8" rx="1">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Corner AI symbol -->
+  <circle cx="44" cy="16" r="8" fill="#F56565" stroke="white" stroke-width="1.5"/>
+  <text x="44" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8" font-weight="bold">AI</text>
+</svg>

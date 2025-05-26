@@ -1,0 +1,68 @@
+{
+  "name": "n8n-nodes-ocr-engine",
+  "version": "1.0.0",
+  "description": "OCR Engine node for n8n - Extract text from images and documents using various OCR engines",
+  "keywords": [
+    "n8n-community-node-package",
+    "ocr",
+    "optical-character-recognition",
+    "text-extraction",
+    "document-processing"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "author": {
+    "name": "OCR Engine Team",
+    "email": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "prepack": "gulp build && npm run typecheck",
+    "postpack": "rm -rf dist",
+    "build": "gulp build",
+    "dev": "gulp build --continueOnError && npm run n8n:start",
+    "format": "prettier --write 'nodes/**/*.ts' 'credentials/**/*.ts'",
+    "lint": "eslint nodes credentials",
+    "lintfix": "eslint nodes credentials --fix",
+    "prepublishOnly": "npm run build && npm run lint -c .eslintrc.js nodes && npm run typecheck",
+    "typecheck": "tsc --noEmit",
+    "n8n:start": "n8n start"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/OcrEngineApi.credentials.js",
+      "dist/credentials/GoogleCloudApi.credentials.js",
+      "dist/credentials/AzureComputerVision.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/OcrEngineNode/OcrEngineNode.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.16",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "eslint": "^8.41.0",
+    "eslint-plugin-n8n-nodes-base": "^1.12.1",
+    "gulp": "^4.0.2",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "n8n-workflow": "*",
+    "prettier": "^2.8.8",
+    "typescript": "^5.1.3"
+  },
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "mime-types": "^2.1.35"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

@@ -1,6 +1,6 @@
-# OCR Engineering - Marker OCR Web Interface
+# OCR Engine - Advanced Document Processing with GPU Acceleration
 
-A comprehensive web-based document processing solution powered by Marker OCR with GPU acceleration, LLM enhancement, and dual OCR processing methods including direct AI processing.
+A comprehensive web-based document processing solution powered by Marker OCR with GPU acceleration, LLM enhancement, and dual OCR processing methods including direct AI processing. Includes a custom n8n node for workflow automation.
 
 ## 🚀 Features
 
@@ -10,6 +10,7 @@ A comprehensive web-based document processing solution powered by Marker OCR wit
 - **LLM Enhancement**: Local Ollama and Google Gemini integration for improved accuracy
 - **Multi-format Support**: PDF, images, Office docs, ebooks, and HTML
 - **Modern Web Interface**: Responsive UI with real-time progress tracking and smart validation
+- **n8n Integration**: Custom node for workflow automation across your network
 
 ### Processing Methods
 
@@ -21,19 +22,12 @@ A comprehensive web-based document processing solution powered by Marker OCR wit
 - **Multi-language**: Support for 90+ languages
 - **LLM Enhancement**: Optional Ollama or Gemini post-processing
 
-#### **⚡ Gemini Direct OCR** *(New!)*
+#### **⚡ Gemini Direct OCR** 
 - **Direct AI Processing**: Bypass traditional pipeline for immediate results
 - **Structural Integrity**: Precision-focused prompts for exact text extraction
 - **Enhanced Accuracy**: Superior handling of complex layouts and mathematical content
 - **Image-Only**: Optimized for image files (PNG, JPG, JPEG, WebP, TIFF, BMP)
 - **Zero Hallucination**: Extracts ONLY visible text without additions or interpretations
-
-### Enhanced User Experience *(New!)*
-- **Smart Input Methods**: Upload files or paste images directly from clipboard
-- **Dynamic LLM Configuration**: Automatic provider switching based on processing method
-- **Real-time Progress Tracking**: Live status updates with method-specific indicators
-- **Bulk Download**: ZIP file generation for multiple processed documents
-- **Intelligent Validation**: Context-aware file type and API key validation
 
 ### Output Options
 - **Markdown**: Clean, structured text with formatting
@@ -66,42 +60,6 @@ A comprehensive web-based document processing solution powered by Marker OCR wit
 - **EPUB** (.epub) - Electronic publication format
 - **MOBI** (.mobi) - Amazon Kindle format
 
-## 🏗️ Architecture
-
-### Dual Processing Pipeline
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Web Frontend  │ ── │  FastAPI Server  │ ── │ Processing Router│
-│  (Bootstrap UI) │    │ (Dual Endpoints) │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-        │                        │                        │
-        │                        ▼                        ▼
-        │               ┌──────────────────┐    ┌─────────────────┐
-        │               │ Traditional Path │    │ Gemini Direct   │
-        │               │ /api/upload      │    │ /api/gemini-    │
-        │               │                  │    │ direct          │
-        │               └──────────────────┘    └─────────────────┘
-        │                        │                        │
-        │                        ▼                        ▼
-        │               ┌──────────────────┐    ┌─────────────────┐
-        │               │   Marker OCR     │    │ Google Gemini   │
-        │               │ (GPU Accelerated)│    │ Vision API      │
-        │               └──────────────────┘    └─────────────────┘
-        │                        │                        
-        │                        ▼                        
-        │               ┌──────────────────┐              
-        │               │   LLM Services   │              
-        │               │ ─────────────────│              
-        └─── Paste ───→ │ • Ollama (Local) │              
-            Images      │ • Gemini (Cloud) │              
-                        └──────────────────┘              
-```
-
-### Smart LLM Configuration
-- **Marker OCR Mode**: Full LLM provider choice (Ollama + Gemini)
-- **Gemini Direct Mode**: Locked to Gemini with visual feedback
-- **Dynamic Switching**: Automatic configuration updates based on processing method
-
 ## 🛠️ Quick Start
 
 ### Prerequisites
@@ -112,7 +70,7 @@ A comprehensive web-based document processing solution powered by Marker OCR wit
   - **Ollama**: For local LLM processing (optional)
   - **Gemini API Key**: For cloud-based processing (optional)
 
-### Docker Deployment (Recommended)
+### Local Setup
 
 1. **Clone and Setup**:
 ```bash
@@ -120,41 +78,48 @@ git clone <repository-url>
 cd ocr_eng
 ```
 
-2. **Build and Run**:
+2. **Start OCR Engine**:
 ```bash
-# With GPU support
-docker build -t ocr_eng .
-docker run -d --name ocr_eng -p 8100:8100 --gpus all \
-  -v $(pwd)/uploads:/app/uploads \
-  -v $(pwd)/outputs:/app/outputs \
-  ocr_eng
+# Local access only
+docker-compose up -d
 
-# CPU only (not recommended)
-docker run -d --name ocr_eng -p 8100:8100 \
-  -v $(pwd)/uploads:/app/uploads \
-  -v $(pwd)/outputs:/app/outputs \
-  ocr_eng
+# Access at: http://localhost:8100
 ```
 
-3. **Access Interface**: Open `http://localhost:8100`
+### Network Access Setup
 
-### Local Development
+To make OCR Engine accessible from other servers in your network:
 
-1. **Install Dependencies**:
+1. **Start Network-Accessible Container**:
 ```bash
-pip install -r requirements.txt
+# Set environment variables for network access
+export HOST_BIND=0.0.0.0
+export HOST=0.0.0.0
+export CORS_ORIGINS=*
+
+# Start container
+docker-compose up -d
 ```
 
-2. **Run Web Interface**:
-```bash
-python web_frontend.py
+2. **Configure Windows Firewall** (Windows hosts):
+```powershell
+# Run PowerShell as Administrator
+.\scripts\windows-firewall-setup.ps1
 ```
 
-## 🎯 Usage Guide
+3. **Test Network Access**:
+```bash
+# Test connectivity
+.\scripts\test-network-access.sh
 
-### Web Interface *(Enhanced!)*
+# Test from another server
+curl http://YOUR_HOST_IP:8100/health
+```
 
-#### **Input Methods**
+## 🎯 Usage
+
+### Web Interface
+
 1. **📁 Upload Files**: Drag & drop or click to select documents
 2. **📋 Paste Images**: Switch to paste mode and use Ctrl+V to paste images from clipboard
 
@@ -173,16 +138,14 @@ python web_frontend.py
    - Page range selection (Marker OCR only)
 
 3. **🚀 Process & Monitor**:
-   - Click "Start Processing" or "Process Content" (for paste)
    - Real-time progress tracking with method-specific status messages
    - Live updates on processing stages
 
 4. **📥 Download Results**:
    - Individual file downloads (MD, JSON, HTML, PDF)
    - **Bulk Download**: ZIP file containing all processed documents
-   - Organized output structure with metadata
 
-### API Endpoints *(Updated!)*
+### API Endpoints
 
 #### Core Processing
 ```bash
@@ -190,7 +153,7 @@ python web_frontend.py
 POST /api/upload
 Content-Type: multipart/form-data
 
-# Gemini Direct OCR processing (NEW!)
+# Gemini Direct OCR processing
 POST /api/gemini-direct
 Content-Type: multipart/form-data
 Required: gemini_api_key, image files only
@@ -201,9 +164,9 @@ GET /api/sessions/{session_id}/status
 # Download individual results
 GET /api/sessions/{session_id}/download/{filename}
 
-# Bulk download (NEW!)
+# Bulk download
 GET /api/sessions/{session_id}/download-all
-Returns: ZIP file with all processed documents
+# Returns: ZIP file with all processed documents
 ```
 
 #### System Information
@@ -220,8 +183,6 @@ GET /api/sessions
 
 ### LLM Enhancement
 
-The system supports two LLM providers for enhanced document processing:
-
 #### **Local Ollama (Default)**
 Configure Ollama for local processing:
 
@@ -235,8 +196,8 @@ ollama_url: "http://localhost:11434"
 ollama_model: "gemma3:12b"
 ```
 
-#### **Google Gemini (Cloud)** *(Enhanced!)*
-Configure Gemini for cloud-based processing with dual modes:
+#### **Google Gemini (Cloud)**
+Configure Gemini for cloud-based processing:
 
 1. **Get API Key**: Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. **Enter API Key**: Input your key directly in the web interface
@@ -244,99 +205,61 @@ Configure Gemini for cloud-based processing with dual modes:
    - `gemini-2.5-flash-preview-05-20` - Latest with adaptive thinking (Recommended)
    - `gemini-2.5-pro-preview-05-06` - Advanced reasoning and multimodal understanding
    - `gemini-2.0-flash` - Stable with next-gen features
-   - `gemini-2.0-flash-lite` - Cost-efficient and low latency
    - `gemini-1.5-flash` - Fast and versatile (Production stable)
    - `gemini-1.5-pro` - High quality processing
 
-**Processing Modes**:
-- **Traditional Enhancement**: Post-processing after Marker OCR
-- **Direct OCR**: Bypass Marker entirely for immediate AI processing
+## 🔌 n8n Integration
 
-**Enhanced Gemini Direct OCR**:
-- **Precision-Focused Prompts**: Structural integrity and exact text extraction
-- **Zero Hallucination**: Extracts ONLY visible text without additions
-- **Format-Aware**: Custom prompts for Markdown, JSON, and HTML output
-- **Critical Requirements Enforcement**:
-  - Extract only visible text from images
-  - Maintain exact structural layout and hierarchy
-  - Preserve all formatting exactly as it appears
-  - No explanations, interpretations, or improvements
-  - Return only extracted text in specified format
+### Custom n8n Node
 
-**Gemini Benefits**:
-- Superior handling of complex layouts and tables
-- Enhanced mathematical content processing
-- Better multi-column text recognition
-- Advanced image understanding
-- No local GPU/memory requirements
+This project includes a comprehensive n8n custom node for workflow automation.
 
-## 📊 Marker OCR Column Handling
+#### Installation
 
-### Multi-Column Text Processing
-
-Marker uses sophisticated layout detection and reading order analysis to properly handle multi-column documents through a multi-stage approach:
-
-#### 1. **Layout Detection Phase**
-Marker uses a custom-trained **LayoutLMv3 model** to detect different document elements:
-- Text blocks
-- Tables
-- Titles and headers
-- Captions
-- Diagrams
-- Headers and footers
-
-#### 2. **Column Detection and Classification**
-A second **custom LayoutLMv3 model** specifically handles:
-- **Column detection**: Identifies column boundaries
-- **Column classification**: Determines if content is single or multi-column
-- **Column separation**: Distinguishes between adjacent columns
-
-#### 3. **Reading Order Detection**
-Uses **Surya** for critical reading order determination:
-- **Reading order model**: Determines the correct sequence of text blocks
-- **Flow analysis**: Understands typical reading patterns (top-to-bottom, left-to-right)
-- **Column awareness**: Ensures proper column-to-column text flow
-
-### Process Flow
-```
-Input Document → Layout Detection → Column Classification → 
-Reading Order Analysis → Text Extraction → Structured Output
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
+1. **Build the n8n node**:
 ```bash
-# GPU Configuration
-CUDA_VISIBLE_DEVICES=0              # GPU device ID
-TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9   # CUDA architectures
-
-# Server Settings
-HOST=0.0.0.0                        # Server host
-PORT=8100                           # Server port
-
-# Processing Options
-MAX_UPLOAD_SIZE=100MB               # File size limit
-MAX_CONCURRENT_JOBS=3               # Parallel processing
+cd n8n_node
+npm install
+npm run build
+npm link
 ```
 
-### Docker GPU Setup
-
-```yaml
-# docker-compose.yml
-services:
-  ocr_eng:
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+2. **Link to your n8n installation**:
+```bash
+cd ~/.n8n/custom
+npm link n8n-nodes-ocr-engine
+# Restart n8n
 ```
 
-## 📊 Performance *(Updated!)*
+#### Configuration
+
+Create OCR Engine API credentials in n8n:
+
+```json
+{
+  "baseUrl": "http://YOUR_HOST_IP:8100",
+  "geminiApiKey": "your-gemini-api-key",
+  "ollamaUrl": "http://YOUR_HOST_IP:11434",
+  "ollamaModel": "gemma3:12b"
+}
+```
+
+#### Features
+
+- **Multiple OCR Engines**: Marker, Gemini Direct, Tesseract, Google Vision, Azure Vision
+- **Advanced Configuration**: 15+ languages, processing options, output formats
+- **Error Handling**: Comprehensive validation and retry logic
+- **Binary Data Support**: Proper n8n binary data handling
+- **Network Ready**: Works with network-accessible OCR Engine
+
+#### Example Workflow
+
+```
+File Trigger (PDF) → OCR Engine Node (Marker) → Database Save
+HTTP Request (Image) → OCR Engine Node (Gemini Direct) → Text Processing
+```
+
+## 📊 Performance
 
 ### Processing Speed
 
@@ -346,7 +269,7 @@ services:
 - **With LLM Enhancement**: +50-100% processing time
 - **Batch Processing**: Linear scaling with GPU memory
 
-#### **Gemini Direct OCR** *(New!)*
+#### **Gemini Direct OCR**
 - **Simple Images**: ~2-5 seconds per image
 - **Complex Layouts**: ~5-15 seconds per image
 - **No GPU Required**: Cloud-based processing
@@ -361,31 +284,71 @@ services:
 - **Mathematical Content**: 85-95% equation accuracy
 - **Multi-column Layout**: 90-95% reading order accuracy
 
-#### **Gemini Direct OCR** *(New!)*
+#### **Gemini Direct OCR**
 - **Structural Integrity**: 99%+ layout preservation
 - **Text Extraction**: 96-99% accuracy for clear images
 - **Mathematical Content**: 90-95% formula accuracy
 - **Table Recognition**: 85-95% structure preservation
 - **Zero Hallucination**: 100% fidelity to visible content
 
+## 🔧 Configuration
+
+### Environment Variables
+
+```bash
+# GPU Configuration
+CUDA_VISIBLE_DEVICES=0              # GPU device ID
+TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9   # CUDA architectures
+
+# Server Settings
+HOST=0.0.0.0                        # Server host (for network access)
+PORT=8100                           # Server port
+CORS_ORIGINS=*                      # CORS origins (for network access)
+
+# Processing Options
+MAX_UPLOAD_SIZE=100MB               # File size limit
+MAX_CONCURRENT_JOBS=3               # Parallel processing
+```
+
+### Docker Configuration
+
+```yaml
+# docker-compose.yml
+services:
+  marker-ocr-web:
+    environment:
+      # For network access, set:
+      - HOST_BIND=0.0.0.0
+      - HOST=0.0.0.0
+      - CORS_ORIGINS=*
+    ports:
+      # For network access:
+      - "0.0.0.0:8100:8100"
+      # For local only:
+      - "127.0.0.1:8100:8100"
+```
+
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-**GPU Not Detected**:
+#### **Network Access Issues**
+1. **Check container status**: `docker ps | grep marker-ocr`
+2. **Test local access**: `curl http://localhost:8100/health`
+3. **Configure firewall**: Run `scripts/windows-firewall-setup.ps1`
+4. **Check port binding**: `netstat -tlnp | grep 8100`
+
+#### **GPU Not Detected**
 ```bash
 # Check CUDA installation
 nvidia-smi
 docker run --gpus all nvidia/cuda:12.8-base nvidia-smi
 ```
 
-**LLM Connection Issues**:
+#### **LLM Connection Issues**
 ```bash
 # Test Ollama connection (WSL users)
 curl http://172.26.0.1:11434/api/tags
-
-# Verify Ollama is running
-ollama list
 
 # Test Gemini API key
 curl -H "Content-Type: application/json" \
@@ -393,77 +356,124 @@ curl -H "Content-Type: application/json" \
      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY"
 ```
 
-**Memory Issues**:
-- Reduce `max_pages` for large documents
-- Process files individually
-- Increase Docker memory limits
+### Diagnostic Commands
 
-### Performance Optimization
-
-**GPU Optimization**:
 ```bash
-# Set optimal CUDA settings
-export CUDA_LAUNCH_BLOCKING=0
-export TORCH_USE_CUDA_DSA=1
+# Test network connectivity
+./scripts/test-network-access.sh
+
+# Check container logs
+docker logs marker-ocr-web
+
+# Monitor resources
+docker stats
+
+# Check n8n node installation
+npm list -g | grep n8n-nodes-ocr-engine
 ```
 
-**Memory Management**:
-```bash
-# Clear GPU cache
-docker exec ocr_eng python -c "import torch; torch.cuda.empty_cache()"
-```
-
-## 📁 Project Structure *(Updated!)*
+## 🏗️ Project Structure
 
 ```
 ocr_eng/
-├── web_frontend.py          # Main web application with dual endpoints
-├── marker_wrapper.py        # GPU-optimized Marker wrapper
-├── marker_ocr_server.py     # API server (alternative)
-├── requirements.txt         # Python dependencies (updated with Gemini)
-├── Dockerfile              # Container configuration
-├── docker-compose.yml     # Orchestration
+├── README.md                    # This comprehensive guide
+├── docker-compose.yml           # Docker configuration (local + network)
+├── Dockerfile                   # Container build configuration
+├── requirements.txt             # Python dependencies
+├── web_frontend.py              # Main web application
+├── marker_wrapper.py            # GPU-optimized Marker wrapper
+├── marker_ocr_server.py         # API server (alternative)
 ├── templates/
-│   └── index.html          # Enhanced web interface with paste functionality
-├── outputs/                # Processed documents with organized structure
-├── uploads/                # Temporary uploads
-├── logs/                   # Application logs
-└── static/                 # Static assets (CSS, JS, images)
+│   └── index.html              # Enhanced web interface
+├── static/                     # Static assets (CSS, JS, images)
+├── scripts/                    # Setup and utility scripts
+│   ├── windows-firewall-setup.ps1  # Windows firewall configuration
+│   ├── setup-network-access.sh     # Network setup automation
+│   └── test-network-access.sh      # Network connectivity testing
+├── n8n_node/                   # Custom n8n node implementation
+│   ├── README.md               # n8n node documentation
+│   ├── package.json            # Node package configuration
+│   ├── nodes/                  # Node implementation
+│   ├── credentials/            # Credential definitions
+│   └── dist/                   # Built node files
+├── outputs/                    # Processed documents
+├── uploads/                    # Temporary uploads
+└── logs/                       # Application logs
 ```
 
-## 🆕 Recent Updates (Latest Release)
+## 🌐 Network Architecture
 
-### ⚡ Major Features Added
-- **🎯 Gemini Direct OCR**: Complete bypass of traditional pipeline for immediate AI processing
-- **📋 Clipboard Integration**: Direct image pasting with Ctrl+V functionality  
-- **🔄 Dual Processing Architecture**: Smart routing between traditional and direct OCR methods
-- **⚙️ Dynamic LLM Configuration**: Automatic provider switching with visual feedback
-- **📦 Bulk Download**: ZIP file generation for multiple processed documents
-- **🎨 Enhanced UI/UX**: Real-time progress tracking and intelligent validation
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Other Server   │────│  Windows Host    │────│     WSL2        │
+│  n8n Workflows │    │  192.168.1.100   │    │  172.26.1.162   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+        │                        │                        │
+        │                        │                        │
+        └─── http://192.168.1.100:8100 ──────────────────→ │
+                                 │                        │
+                                 │                        ▼
+                                 │               ┌─────────────────┐
+                                 │               │ Docker Container│
+                                 │               │   OCR Engine    │
+                                 │               │  GPU Processing │
+                                 │               └─────────────────┘
+                                 │
+                              Port Forwarding
+                             Windows Firewall
+```
 
-### 🔧 Technical Improvements  
-- **Precision OCR Prompts**: Enhanced Gemini prompts for structural integrity
-- **Smart Endpoint Routing**: `/api/upload` vs `/api/gemini-direct` based on processing method
-- **Contextual Validation**: File type and API key validation per processing mode
-- **Session Management**: Improved organization and cleanup of processed files
-- **Container Optimization**: Rebuilt with latest dependencies and GPU support
+## 🔒 Security Considerations
 
-### 🐛 Fixes & Enhancements
-- **Progress Bar**: Fixed real-time progress tracking for all processing methods
-- **Download Buttons**: MD/JSON options now appear for all processed files
-- **Paste Functionality**: Now respects selected OCR engine (Marker vs Gemini Direct)
-- **LLM Provider Lock**: Gemini Direct automatically locks to Gemini with visual indication
-- **Bulk Operations**: Streamlined multi-file processing and download workflows
+### Production Recommendations
 
-## 🎯 Output Control
+1. **API Authentication**: Implement API key authentication for production
+2. **HTTPS**: Use reverse proxy with SSL/TLS certificates
+3. **Rate Limiting**: Implement request rate limiting
+4. **File Validation**: Strict file type and size validation
+5. **Network Security**: Configure firewall rules appropriately
 
-The system generates **only the selected output format** to avoid redundant files:
+### Network Security
 
-- **Markdown selected**: `document.md` + `document_meta.json`
-- **JSON selected**: `document.json` 
-- **HTML selected**: `document.html` + `document_meta.json`
+- **Firewall Configuration**: Only open necessary ports (8100)
+- **Access Control**: Consider IP-based restrictions for sensitive environments
+- **CORS Policy**: Configure CORS origins appropriately for your network
+- **Monitoring**: Implement logging and monitoring for security events
 
-No additional corrected, reordered, or enhanced versions are created - just clean, single-format output.
+## 📈 Performance Optimization
+
+### For High-Volume Processing
+- Use **Marker OCR** with GPU acceleration for maximum throughput
+- Configure **concurrent processing** limits appropriately
+- Monitor **GPU memory usage** to avoid OOM errors
+- Use **local Ollama** to reduce API latency
+
+### For Network Deployment
+- Use **gigabit Ethernet** for best file transfer performance
+- Consider **caching** for frequently processed documents
+- Implement **load balancing** for high-availability setups
+- Monitor **network bandwidth** usage
+
+## 🔧 Development Notes
+
+### Directory Structure
+- **Main application**: `web_frontend.py` (FastAPI server with dual OCR endpoints)
+- **Docker config**: `docker-compose.yml` (supports local/network modes via env vars)
+- **Startup**: `start.sh` (use `--network` flag for network access)
+- **n8n integration**: Complete custom node in `n8n_node/` directory
+- **Scripts**: Essential utilities in `scripts/` (firewall, testing)
+
+### Network Access Configuration
+- **Local mode**: Default behavior, binds to `127.0.0.1:8100`
+- **Network mode**: Set `HOST_BIND=0.0.0.0` environment variable
+- **Firewall**: Use `scripts/windows-firewall-setup.ps1` for Windows hosts
+- **Testing**: Use `scripts/test-network-access.sh` for diagnostics
+
+### n8n Node Development
+- **Source**: `n8n_node/nodes/OcrEngineNode/`
+- **Build**: `npm run build` in `n8n_node/`
+- **Install**: `npm link` and link to n8n custom directory
+- **Credentials**: Supports OCR Engine API, Google Cloud, and Azure
 
 ## 🤝 Contributing
 
@@ -481,7 +491,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Marker OCR**: Advanced document processing engine
 - **Ollama**: Local LLM inference
+- **Google Gemini**: AI-powered text extraction and enhancement
 - **FastAPI**: Modern web framework
-- **Bootstrap**: Responsive UI components
+- **n8n Community**: Excellent platform for workflow automation
 - **Surya**: Reading order detection
 - **LayoutLMv3**: Document layout understanding
+
+---
+
+**🚀 Ready to process documents with AI-powered accuracy and GPU speed!**
+
+Access your OCR Engine at `http://localhost:8100` (local) or `http://YOUR_HOST_IP:8100` (network) and start extracting text from any document format with unprecedented accuracy and speed.

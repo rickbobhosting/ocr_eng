@@ -1,30 +1,44 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
+*.pyo
+*.pyd
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
-venv/
 env/
-ENV/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Docker
+.docker/
+
+# Directories with user data
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+logs/*
+!logs/.gitkeep
+models/*
+!models/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # IDE
 .vscode/
@@ -35,48 +49,29 @@ ENV/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Project specific - uploads and outputs
-uploads/
-outputs/
-logs/
-models/
-*.pdf
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.tiff
-*.webp
-
-# Docker
-.dockerignore
+# n8n node build artifacts
+n8n_node/node_modules/
+n8n_node/dist/
+n8n_node/package-lock.json
+n8n_node/*.tgz
+n8n_node/*.tar.gz
+n8n_node/package_temp/
+n8n_node/${APPDATA}/
 
 # Temporary files
 *.tmp
 *.temp
-*.log
+.tmp/
+.temp/
 
-# Claude AI
-.claude/
-**/.claude/settings.local.json
-
-# Environment variables
-.env
-.env.local
-
-# Jupyter Notebooks
-.ipynb_checkpoints/
-
-# Test files
-test_*.py
-*_test.py
-
-# Backup files
-*_backup.py
-*_old.py
-
-# n8n node development (separate project)
-n8n_node/
+# Backups
+*.bak
+*.backup
+*~
