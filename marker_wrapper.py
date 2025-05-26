@@ -61,15 +61,36 @@ class MarkerOCR:
         """
         self.models = None
         self.models_loaded = False
-        self.available = MARKER_AVAILABLE
         self.use_gpu = use_gpu
         self.logger = logging.getLogger("marker_ocr")
+        
+        # Check availability on each instance creation to be safe
+        self.available = self._check_marker_availability()
         
         # Configure GPU settings
         self._setup_gpu_environment()
         
         if not lazy_load and self.available:
             self._load_models()
+    
+    def _check_marker_availability(self) -> bool:
+        """Check if Marker is available for this instance."""
+        try:
+            import marker
+            import subprocess
+            # Test CLI availability
+            result = subprocess.run(['marker_single', '--help'], 
+                                  capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                self.logger.info("✓ Marker OCR is available (CLI)")
+                return True
+            else:
+                self.logger.warning("⚠️ Marker CLI not responding")
+                return False
+        except Exception as e:
+            self.logger.warning(f"⚠️ Marker OCR not available: {e}")
+            self.logger.warning("Please run: pip install marker-pdf[full]")
+            return False
     
     def _setup_gpu_environment(self):
         """Configure GPU environment for optimal performance."""
@@ -106,7 +127,9 @@ class MarkerOCR:
                          ollama_base_url: str = None,
                          ollama_model: str = None,
                          gemini_api_key: str = None,
-                         gemini_model: str = None) -> Dict[str, Any]:
+                         gemini_model: str = None,
+                         images_dir: str = None,
+                         organized_output: bool = False) -> Dict[str, Any]:
         """Convert file using Marker CLI."""
         import subprocess
         import json
@@ -572,7 +595,9 @@ class MarkerOCR:
                 ollama_base_url=kwargs.get('ollama_base_url'),
                 ollama_model=kwargs.get('ollama_model'),
                 gemini_api_key=kwargs.get('gemini_api_key'),
-                gemini_model=kwargs.get('gemini_model')
+                gemini_model=kwargs.get('gemini_model'),
+                images_dir=kwargs.get('images_dir'),
+                organized_output=kwargs.get('organized_output', False)
             )
             
             if not result["success"]:

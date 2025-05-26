@@ -36,19 +36,6 @@
         .feature-card:hover {
             transform: translateY(-2px);
         }
-        .paste-zone {
-            border: 2px dashed #28a745;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            background-color: #f8f9fa;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .paste-zone:hover {
-            background-color: #e8f5e8;
-            border-color: #1e7e34;
-        }
         
         /* Dark mode styles */
         [data-theme="dark"] {
@@ -99,16 +86,14 @@
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
         
-        [data-theme="dark"] .drag-drop-zone,
-        [data-theme="dark"] .paste-zone {
+        [data-theme="dark"] .drag-drop-zone {
             background-color: #2d3748;
             border-color: #4a5568;
             color: #e9ecef;
         }
         
         [data-theme="dark"] .drag-drop-zone:hover,
-        [data-theme="dark"] .drag-drop-zone.dragover,
-        [data-theme="dark"] .paste-zone:hover {
+        [data-theme="dark"] .drag-drop-zone.dragover {
             background-color: #374151;
             border-color: #0d6efd;
         }
@@ -170,7 +155,7 @@
                     </h1>
                     <p class="lead">
                         Transform your documents with state-of-the-art OCR, AI enhancement, and GPU acceleration.
-                        Upload PDFs, images, office documents, or paste content for professional-quality text extraction.
+                        Upload PDFs, images, and office documents for professional-quality text extraction.
                     </p>
                 </div>
             </div>
@@ -229,7 +214,7 @@
                             </label>
                             <input type="radio" class="btn-check" name="inputMode" id="pasteMode">
                             <label class="btn btn-outline-primary" for="pasteMode">
-                                <i class="fas fa-paste me-2"></i>Paste Image
+                                <i class="fas fa-paste me-2"></i>Paste Text/Image
                             </label>
                         </div>
                     </div>
@@ -259,18 +244,7 @@
 
                             <!-- Processing Options -->
                             <div class="row">
-                                <div class="col-md-4">
-                                    <h6><i class="fas fa-cogs me-2"></i>Processing Method</h6>
-                                    <div class="mb-3">
-                                        <label class="form-label">OCR Engine</label>
-                                        <select class="form-select" name="processing_method" id="processingMethod">
-                                            <option value="marker">Marker OCR</option>
-                                            <option value="gemini_direct">Gemini Direct OCR</option>
-                                        </select>
-                                        <small class="form-text text-muted">Choose between traditional OCR pipeline or direct AI processing</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <h6><i class="fas fa-cog me-2"></i>Output Options</h6>
                                     <div class="mb-3">
                                         <label class="form-label">Output Format</label>
@@ -282,7 +256,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <h6><i class="fas fa-magic me-2"></i>AI Enhancement</h6>
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" name="use_llm" id="useLLM" checked>
@@ -312,7 +286,6 @@
                                         <option value="ollama">Ollama (Local)</option>
                                         <option value="gemini">Google Gemini</option>
                                     </select>
-                                    <small class="form-text text-muted">Choose your preferred LLM provider for document enhancement</small>
                                 </div>
                                 
                                 <!-- Ollama Options -->
@@ -378,51 +351,6 @@
                         </form>
                     </div>
                 </div>
-
-                <!-- Paste Snippet Card -->
-                <div class="card" id="pasteCard" style="display: none;">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-paste me-2"></i>Paste Image
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="paste-zone mb-3" id="pasteZone">
-                            <div id="pasteZoneContent">
-                                <i class="fas fa-clipboard fa-3x text-success mb-3"></i>
-                                <h5>Paste Image Here</h5>
-                                <p class="text-muted">Use Ctrl+V to paste an image from clipboard</p>
-                            </div>
-                            <img id="pastedImage" style="display: none; max-width: 100%; max-height: 400px; border-radius: 8px;">
-                        </div>
-                        <button type="button" class="btn btn-primary btn-lg" id="processPasteBtn">
-                            <i class="fas fa-magic me-2"></i>Process Content
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-lg ms-2" id="clearPasteBtn">
-                            <i class="fas fa-trash me-2"></i>Clear
-                        </button>
-                    </div>
-                </div>
-
-                <!-- OCR Results Display -->
-                <div class="card mt-3" id="ocrResultsCard" style="display: none;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-file-text me-2"></i>OCR Results
-                        </h5>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="copyToClipboard('ocrResultText')">
-                                <i class="fas fa-copy me-1"></i>Copy
-                            </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="downloadText('ocrResultText', 'ocr-result.txt')">
-                                <i class="fas fa-download me-1"></i>Download
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" id="ocrResultText" rows="15" readonly></textarea>
-                    </div>
-                </div>
             </div>
 
             <!-- Status Panel -->
@@ -437,7 +365,7 @@
                         <div id="statusPanel">
                             <p class="text-muted">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Upload files or paste content to start processing
+                                Upload files to start processing
                             </p>
                         </div>
                         
@@ -456,12 +384,7 @@
 
                         <!-- Results Section -->
                         <div class="results-section" id="resultsSection">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6><i class="fas fa-download me-2"></i>Download Results</h6>
-                                <button class="btn btn-sm btn-outline-primary" id="bulkDownloadBtn" style="display: none;">
-                                    <i class="fas fa-archive me-1"></i>Download All
-                                </button>
-                            </div>
+                            <h6><i class="fas fa-download me-2"></i>Download Results</h6>
                             <div id="downloadLinks"></div>
                         </div>
                     </div>
@@ -490,7 +413,6 @@
     <script>
         let currentSessionId = null;
         let statusInterval = null;
-        let pastedImageData = null;
 
         // DOM elements
         const dropZone = document.getElementById('dropZone');
@@ -504,45 +426,20 @@
         const geminiOptions = document.getElementById('geminiOptions');
         const processingStatus = document.getElementById('processingStatus');
         const resultsSection = document.getElementById('resultsSection');
-        
-        // New elements
-        const uploadModeRadio = document.getElementById('uploadMode');
-        const pasteModeRadio = document.getElementById('pasteMode');
-        const uploadCard = document.getElementById('uploadCard');
-        const pasteCard = document.getElementById('pasteCard');
-        const pasteZone = document.getElementById('pasteZone');
-        const pastedImage = document.getElementById('pastedImage');
-        const pasteZoneContent = document.getElementById('pasteZoneContent');
-        const processPasteBtn = document.getElementById('processPasteBtn');
-        const clearPasteBtn = document.getElementById('clearPasteBtn');
-        const ocrResultsCard = document.getElementById('ocrResultsCard');
-        const ocrResultText = document.getElementById('ocrResultText');
-        const bulkDownloadBtn = document.getElementById('bulkDownloadBtn');
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadSystemStatus();
             setupEventListeners();
             initializeTheme();
-            // Set initial LLM configuration based on default processing method
-            updateLLMConfiguration('marker');
         });
 
         function setupEventListeners() {
-            // Input mode toggle
-            uploadModeRadio.addEventListener('change', toggleInputMode);
-            pasteModeRadio.addEventListener('change', toggleInputMode);
-
-            // Drag and drop for upload
+            // Drag and drop
             dropZone.addEventListener('click', () => fileInput.click());
             dropZone.addEventListener('dragover', handleDragOver);
             dropZone.addEventListener('drop', handleDrop);
             dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-
-            // Paste functionality
-            document.addEventListener('paste', handlePaste);
-            processPasteBtn.addEventListener('click', processPastedContent);
-            clearPasteBtn.addEventListener('click', clearPastedContent);
 
             // File input change
             fileInput.addEventListener('change', handleFileSelect);
@@ -555,12 +452,6 @@
                 llmOptions.style.display = this.checked ? 'block' : 'none';
             });
 
-            // Processing method switching
-            const processingMethodSelect = document.getElementById('processingMethod');
-            processingMethodSelect.addEventListener('change', function() {
-                updateLLMConfiguration(this.value);
-            });
-
             // LLM provider switching
             llmProvider.addEventListener('change', function() {
                 if (this.value === 'ollama') {
@@ -571,249 +462,6 @@
                     geminiOptions.style.display = 'block';
                 }
             });
-
-            // Bulk download
-            bulkDownloadBtn.addEventListener('click', handleBulkDownload);
-        }
-
-        function updateLLMConfiguration(processingMethod) {
-            if (processingMethod === 'gemini_direct') {
-                // Force Gemini provider for Gemini Direct OCR
-                llmProvider.value = 'gemini';
-                llmProvider.disabled = true;
-                llmProvider.classList.add('bg-light');
-                
-                // Hide Ollama options, show Gemini options
-                ollamaOptions.style.display = 'none';
-                geminiOptions.style.display = 'block';
-                
-                // Update the help text
-                const llmProviderParent = llmProvider.parentElement;
-                let helpText = llmProviderParent.querySelector('.form-text');
-                if (!helpText) {
-                    helpText = document.createElement('small');
-                    helpText.className = 'form-text text-muted';
-                    llmProviderParent.appendChild(helpText);
-                }
-                helpText.innerHTML = '<i class="fas fa-lock me-1"></i>Gemini Direct OCR requires Gemini API for processing';
-                helpText.className = 'form-text text-info';
-            } else {
-                // Enable provider selection for traditional Marker OCR
-                llmProvider.disabled = false;
-                llmProvider.classList.remove('bg-light');
-                
-                // Show appropriate options based on current selection
-                if (llmProvider.value === 'ollama') {
-                    ollamaOptions.style.display = 'block';
-                    geminiOptions.style.display = 'none';
-                } else {
-                    ollamaOptions.style.display = 'none';
-                    geminiOptions.style.display = 'block';
-                }
-                
-                // Update the help text
-                const llmProviderParent = llmProvider.parentElement;
-                let helpText = llmProviderParent.querySelector('.form-text');
-                if (helpText) {
-                    helpText.textContent = 'Choose your preferred LLM provider for document enhancement';
-                    helpText.className = 'form-text text-muted';
-                }
-            }
-        }
-
-        function toggleInputMode() {
-            if (uploadModeRadio.checked) {
-                uploadCard.style.display = 'block';
-                pasteCard.style.display = 'none';
-                ocrResultsCard.style.display = 'none';
-            } else {
-                uploadCard.style.display = 'none';
-                pasteCard.style.display = 'block';
-            }
-        }
-
-        function handlePaste(e) {
-            if (!pasteModeRadio.checked) return;
-            
-            const items = e.clipboardData.items;
-            
-            for (let item of items) {
-                if (item.type.indexOf('image') !== -1) {
-                    e.preventDefault();
-                    const blob = item.getAsFile();
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        pastedImage.src = event.target.result;
-                        pastedImageData = event.target.result;
-                        // Show image in paste zone, hide the content
-                        pasteZoneContent.style.display = 'none';
-                        pastedImage.style.display = 'block';
-                        checkPasteContent();
-                    };
-                    reader.readAsDataURL(blob);
-                    break;
-                }
-            }
-        }
-
-        function checkPasteContent() {
-            const hasImage = pastedImageData !== null;
-            processPasteBtn.disabled = !hasImage;
-        }
-
-        function clearPastedContent() {
-            pastedImageData = null;
-            pastedImage.style.display = 'none';
-            pasteZoneContent.style.display = 'block';
-            ocrResultsCard.style.display = 'none';
-            checkPasteContent();
-        }
-
-        async function processPastedContent() {
-            const hasImage = pastedImageData !== null;
-            
-            if (!hasImage) {
-                alert('Please paste an image first.');
-                return;
-            }
-
-            // Get processing method from the upload form
-            const processingMethod = document.getElementById('processingMethod').value;
-
-            // Process image with OCR
-            try {
-                processPasteBtn.disabled = true;
-                
-                // Update button text based on processing method
-                const statusText = processingMethod === 'gemini_direct' ? 'Processing with Gemini Direct OCR...' : 'Processing with Marker OCR...';
-                processPasteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + statusText;
-                
-                // Convert base64 to blob
-                const response = await fetch(pastedImageData);
-                const blob = await response.blob();
-                
-                // Create form data
-                const formData = new FormData();
-                formData.append('files', blob, 'pasted-image.png');
-                formData.append('output_format', 'markdown');
-                formData.append('use_llm', 'true');
-                formData.append('extract_images', 'false');
-                
-                // Validate and add processing method specific parameters
-                if (processingMethod === 'gemini_direct') {
-                    // For Gemini Direct OCR, we need the Gemini API key
-                    const apiKey = document.querySelector('[name="gemini_api_key"]').value;
-                    if (!apiKey) {
-                        alert('Gemini API key is required for Gemini Direct OCR. Please enter your API key in the Gemini options section.');
-                        return;
-                    }
-                    formData.append('gemini_api_key', apiKey);
-                    formData.append('gemini_model', document.querySelector('[name="gemini_model"]').value);
-                } else {
-                    // For traditional Marker OCR, use the selected LLM provider
-                    formData.append('llm_provider', llmProvider.value);
-                    
-                    if (llmProvider.value === 'ollama') {
-                        formData.append('ollama_url', document.querySelector('[name="ollama_url"]').value);
-                        formData.append('ollama_model', document.querySelector('[name="ollama_model"]').value);
-                    } else if (llmProvider.value === 'gemini') {
-                        const apiKey = document.querySelector('[name="gemini_api_key"]').value;
-                        if (!apiKey) {
-                            alert('Please enter your Gemini API key first.');
-                            return;
-                        }
-                        formData.append('gemini_api_key', apiKey);
-                        formData.append('gemini_model', document.querySelector('[name="gemini_model"]').value);
-                    }
-                }
-                
-                // Choose endpoint based on processing method
-                const endpoint = processingMethod === 'gemini_direct' ? '/api/gemini-direct' : '/api/upload';
-                
-                // Upload and process
-                const uploadResponse = await fetch(endpoint, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await uploadResponse.json();
-                
-                if (result.success) {
-                    // Poll for results
-                    await pollPasteResults(result.session_id);
-                } else {
-                    throw new Error(result.message || 'Processing failed');
-                }
-                
-            } catch (error) {
-                alert('Error processing image: ' + error.message);
-            } finally {
-                processPasteBtn.disabled = false;
-                processPasteBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Process Content';
-            }
-        }
-
-        async function pollPasteResults(sessionId) {
-            const maxAttempts = 30; // 1 minute max
-            let attempts = 0;
-            
-            const poll = async () => {
-                try {
-                    const response = await fetch(`/api/sessions/${sessionId}/status`);
-                    const status = await response.json();
-                    
-                    if (status.status === 'completed' && status.files.length > 0) {
-                        const file = status.files[0];
-                        if (file.status === 'completed' && file.output_files.markdown) {
-                            // Download the markdown content
-                            const mdFileName = file.output_files.markdown.split('/').pop();
-                            const contentResponse = await fetch(`/api/sessions/${sessionId}/download/${mdFileName}`);
-                            const content = await contentResponse.text();
-                            
-                            ocrResultText.value = content;
-                            ocrResultsCard.style.display = 'block';
-                            return;
-                        }
-                    } else if (status.status === 'failed') {
-                        throw new Error('OCR processing failed');
-                    } else if (attempts < maxAttempts) {
-                        attempts++;
-                        setTimeout(poll, 2000);
-                    } else {
-                        throw new Error('Processing timeout');
-                    }
-                } catch (error) {
-                    alert('Error getting OCR results: ' + error.message);
-                }
-            };
-            
-            poll();
-        }
-
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            element.select();
-            document.execCommand('copy');
-            
-            // Show feedback
-            const originalText = element.value;
-            element.value = 'Copied to clipboard!';
-            setTimeout(() => {
-                element.value = originalText;
-            }, 1000);
-        }
-
-        function downloadText(elementId, filename) {
-            const content = document.getElementById(elementId).value;
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
         }
 
         function handleDragOver(e) {
@@ -869,40 +517,11 @@
                 return;
             }
 
-            // Get processing method
-            const processingMethod = formData.get('processing_method');
-            
-            // Validate Gemini Direct OCR requirements
-            if (processingMethod === 'gemini_direct') {
-                const geminiApiKey = formData.get('gemini_api_key');
-                if (!geminiApiKey) {
-                    alert('Gemini API key is required for Gemini Direct OCR. Please enter your API key in the Gemini options section.');
-                    return;
-                }
-                
-                // Check if files are images only for Gemini Direct
-                const invalidFiles = [];
-                for (let file of files) {
-                    if (!file.type.startsWith('image/')) {
-                        invalidFiles.push(file.name);
-                    }
-                }
-                
-                if (invalidFiles.length > 0) {
-                    alert(`Gemini Direct OCR only supports image files. Please remove these non-image files: ${invalidFiles.join(', ')}`);
-                    return;
-                }
-            }
-
             try {
                 document.getElementById('submitBtn').disabled = true;
                 processingStatus.style.display = 'block';
-                resultsSection.style.display = 'none';
                 
-                // Choose endpoint based on processing method
-                const endpoint = processingMethod === 'gemini_direct' ? '/api/gemini-direct' : '/api/upload';
-                
-                const response = await fetch(endpoint, {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -912,15 +531,6 @@
                 if (result.success) {
                     currentSessionId = result.session_id;
                     startStatusPolling();
-                    
-                    // Show processing method in status
-                    if (result.method === 'gemini_direct') {
-                        document.getElementById('fileStatus').innerHTML = `
-                            <small class="text-muted">
-                                <i class="fas fa-robot me-1"></i>Processing with Gemini Direct OCR...
-                            </small>
-                        `;
-                    }
                 } else {
                     throw new Error(result.message || 'Upload failed');
                 }
@@ -949,29 +559,19 @@
                 } catch (error) {
                     console.error('Status polling error:', error);
                 }
-            }, 1000); // More frequent updates for better UX
+            }, 2000);
         }
 
         function updateStatus(status) {
-            const progress = status.total_files > 0 ? (status.processed_files / status.total_files) * 100 : 0;
+            const progress = (status.processed_files / status.total_files) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
             document.getElementById('progressText').textContent = Math.round(progress) + '%';
             
             const fileStatus = document.getElementById('fileStatus');
-            
-            // Show current file being processed
-            let currentFileInfo = '';
-            if (status.files && status.files.length > 0) {
-                const processingFile = status.files.find(f => f.status === 'processing');
-                if (processingFile) {
-                    currentFileInfo = `<br>Current: ${processingFile.filename}`;
-                }
-            }
-            
             fileStatus.innerHTML = `
                 <small class="text-muted">
                     Processing: ${status.processed_files}/${status.total_files} files<br>
-                    Status: ${status.status}${currentFileInfo}
+                    Status: ${status.status}
                 </small>
             `;
         }
@@ -983,76 +583,38 @@
             const downloadLinks = document.getElementById('downloadLinks');
             downloadLinks.innerHTML = '';
             
-            let hasResults = false;
-            
-            status.files.forEach((file, index) => {
+            status.files.forEach(file => {
                 if (file.status === 'completed') {
-                    hasResults = true;
                     const fileDiv = document.createElement('div');
-                    fileDiv.className = 'mb-2 p-2 border rounded';
+                    fileDiv.className = 'mb-2';
                     
                     let links = '';
-                    if (file.output_files && file.output_files.markdown) {
+                    if (file.output_files.markdown) {
                         const mdFileName = file.output_files.markdown.split('/').pop();
                         links += `<a href="/api/sessions/${currentSessionId}/download/${mdFileName}" class="btn btn-sm btn-outline-primary me-1" download>MD</a>`;
                     }
-                    if (file.output_files && file.output_files.json) {
+                    if (file.output_files.json) {
                         const jsonFileName = file.output_files.json.split('/').pop();
                         links += `<a href="/api/sessions/${currentSessionId}/download/${jsonFileName}" class="btn btn-sm btn-outline-info me-1" download>JSON</a>`;
                     }
-                    if (file.output_files && file.output_files.html) {
+                    if (file.output_files.html) {
                         const htmlFileName = file.output_files.html.split('/').pop();
                         links += `<a href="/api/sessions/${currentSessionId}/download/${htmlFileName}" class="btn btn-sm btn-outline-success me-1" download>HTML</a>`;
                     }
-                    if (file.output_files && file.output_files.pdf) {
-                        const pdfFileName = file.output_files.pdf.split('/').pop();
+                    if (file.output_files && file.output_files.pdf_file) {
+                        const pdfFileName = file.output_files.pdf_file.split('/').pop();
                         links += `<a href="/api/sessions/${currentSessionId}/download/${pdfFileName}" class="btn btn-sm btn-outline-danger me-1" download>PDF</a>`;
                     }
                     
                     fileDiv.innerHTML = `
                         <div class="d-flex justify-content-between align-items-center">
-                            <small><strong>${file.filename}</strong></small>
+                            <small>${file.filename}</small>
                             <div>${links}</div>
-                        </div>
-                        <div class="mt-1">
-                            <small class="text-muted">
-                                Processing time: ${file.processing_time || 'N/A'} | 
-                                Pages: ${file.pages_processed || 'N/A'} | 
-                                Images: ${file.images_extracted || 0}
-                            </small>
                         </div>
                     `;
                     downloadLinks.appendChild(fileDiv);
                 }
             });
-            
-            // Show bulk download button if there are results
-            if (hasResults && status.files.length > 1) {
-                bulkDownloadBtn.style.display = 'inline-block';
-            }
-        }
-
-        async function handleBulkDownload() {
-            if (!currentSessionId) return;
-            
-            try {
-                const response = await fetch(`/api/sessions/${currentSessionId}/download-all`);
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ocr-results-${currentSessionId}.zip`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                } else {
-                    throw new Error('Bulk download failed');
-                }
-            } catch (error) {
-                alert('Error downloading files: ' + error.message);
-            }
         }
 
         async function loadSystemStatus() {
@@ -1126,10 +688,7 @@
                     // Reset the interface
                     processingStatus.style.display = 'none';
                     resultsSection.style.display = 'none';
-                    bulkDownloadBtn.style.display = 'none';
                     fileList.innerHTML = '';
-                    ocrResultsCard.style.display = 'none';
-                    clearPastedContent();
                     currentSessionId = null;
                     if (statusInterval) {
                         clearInterval(statusInterval);
