@@ -243,19 +243,24 @@ class MarkerOCR:
             for img_path in output_path.rglob("*.jpg"):
                 images.append(str(img_path))
             
-            # Generate PDF based on output format or when files are available
+            # Generate additional formats only if explicitly requested
             pdf_file = None
             input_name = Path(input_path).stem
             
-            # Always try to generate PDF if we have source files
-            if html_file:
-                # Use existing HTML file
-                pdf_file = self._generate_pdf_from_html(html_file, output_dir, input_name)
-            elif markdown_file:
-                # Convert markdown to HTML then to PDF
-                temp_html = self._markdown_to_html(markdown_file, output_dir, input_name)
-                if temp_html:
-                    pdf_file = self._generate_pdf_from_html(temp_html, output_dir, input_name)
+            # Only generate PDF if specifically requested
+            if output_format == "pdf":
+                if html_file:
+                    # Use existing HTML file
+                    pdf_file = self._generate_pdf_from_html(html_file, output_dir, input_name)
+                elif markdown_file:
+                    # Convert markdown to HTML then to PDF
+                    temp_html = self._markdown_to_html(markdown_file, output_dir, input_name)
+                    if temp_html:
+                        pdf_file = self._generate_pdf_from_html(temp_html, output_dir, input_name)
+            
+            # Only generate HTML if not already created and specifically needed
+            if not html_file and output_format == "html" and markdown_file:
+                html_file = self._markdown_to_html(markdown_file, output_dir, input_name)
             
             return {
                 "success": True,
