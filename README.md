@@ -475,6 +475,24 @@ ocr_eng/
 - **Install**: `npm link` and link to n8n custom directory
 - **Credentials**: Supports OCR Engine API, Google Cloud, and Azure
 
+## 📋 Recent Updates
+
+### v2.1 - Processing Efficiency Improvements (May 2025)
+- **🚀 Optimized Output Generation**: Fixed inefficient processing that was generating HTML and PDF files even when only Markdown was requested
+- **⚡ Performance Enhancement**: Eliminated unnecessary weasyprint processing and font loading for single-format requests
+- **🔧 Network Access Fix**: Resolved Docker container network binding issues for n8n integration
+- **📦 n8n Node Packaging**: Completed custom n8n node development with proper API integration
+- **🌐 Network Deployment**: Enhanced network access configuration with proper firewall scripts
+
+### Previous Major Features
+- **⚡ Gemini Direct OCR**: Added direct AI processing bypass for immediate results
+- **🎯 Dynamic LLM Configuration**: Smart provider switching based on processing method
+- **📱 Enhanced UI**: Paste functionality, bulk downloads, and real-time progress tracking
+- **🔄 Dual Processing**: Traditional Marker OCR + Gemini Direct OCR options
+- **🚀 GPU Acceleration**: RTX 5080 optimization with CUDA 12.8+ support
+
+---
+
 ## 🤝 Contributing
 
 1. Fork the repository
