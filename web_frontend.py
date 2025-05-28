@@ -80,6 +80,16 @@ ocr_engine = MarkerOCR()
 # In-memory storage for processing sessions
 processing_sessions: Dict[str, Dict[str, Any]] = {}
 
+def get_file_extension(output_format: str) -> str:
+    """Map output format to appropriate file extension"""
+    extension_map = {
+        'markdown': 'md',
+        'json': 'json', 
+        'html': 'html',
+        'pdf': 'pdf'
+    }
+    return extension_map.get(output_format, 'txt')
+
 
 # Add validation error handler
 @app.exception_handler(RequestValidationError)
@@ -669,8 +679,9 @@ async def process_gemini_direct_background(
                 )
                 
                 if result['success']:
-                    # Create output file in documents directory
-                    output_filename = f"{Path(filename).stem}.{output_format}"
+                    # Create output file in documents directory with proper extension
+                    file_extension = get_file_extension(output_format)
+                    output_filename = f"{Path(filename).stem}.{file_extension}"
                     output_file = documents_dir / output_filename
                     
                     # Write the extracted text to file
