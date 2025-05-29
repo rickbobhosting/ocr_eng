@@ -665,6 +665,14 @@ async def process_files_background(
         })
         
         logger.info(f"Completed processing session {session_id}")
+        
+        # Run cleanup to prevent accumulation of old files
+        # This happens in the background after each successful processing
+        # Keep only the 5 most recent sessions
+        try:
+            cleanup_old_outputs(keep_recent=5)
+        except Exception as cleanup_error:
+            logger.warning(f"Auto-cleanup after processing failed: {cleanup_error}")
     
     except Exception as e:
         processing_sessions[session_id].update({
@@ -774,6 +782,14 @@ async def process_gemini_direct_background(
         })
         
         logger.info(f"Completed Gemini Direct processing session {session_id}")
+        
+        # Run cleanup to prevent accumulation of old files
+        # This happens in the background after each successful processing
+        # Keep only the 5 most recent sessions
+        try:
+            cleanup_old_outputs(keep_recent=5)
+        except Exception as cleanup_error:
+            logger.warning(f"Auto-cleanup after processing failed: {cleanup_error}")
     
     except Exception as e:
         processing_sessions[session_id].update({
@@ -799,20 +815,57 @@ async def download_file(session_id: str, filename: str):
     try:
         project_dir = Path("outputs") / f"project_{session_id}"
         
-        # Search for the file in project directory and subdirectories
+        # Check if we can get the file path directly from the session data first
+        # This avoids searching the filesystem entirely when possible
         file_path = None
+        if session_id in processing_sessions:
+            session_data = processing_sessions[session_id]
+            # Try to find the file in the session's file outputs
+            for file_info in session_data.get("files", []):
+                if file_info.get("status") == "completed" and file_info.get("output_files"):
+                    # Check each output type for the requested filename
+                    for output_type, output_path in file_info["output_files"].items():
+                        if output_path and output_path.endswith("/" + filename):
+                            file_path = Path(output_path)
+                            break
+                    if file_path:
+                        break
         
-        # First try direct path
-        direct_path = project_dir / filename
-        if direct_path.exists() and direct_path.is_file():
-            file_path = direct_path
-        else:
-            # Search recursively in subdirectories (documents, images, metadata)
-            for path in project_dir.rglob(filename):
-                if path.is_file():
+        # If not found in session data, try specific locations instead of full recursive search
+        if not file_path:
+            # Check specific likely locations in order of probability
+            potential_paths = [
+                project_dir / filename,                                 # Direct in project dir
+                project_dir / "documents" / filename,                   # In documents dir
+                project_dir / "documents" / Path(filename).stem / filename,  # In document-specific subdir
+                project_dir / "images" / filename,                      # In images dir
+                project_dir / "metadata" / filename                     # In metadata dir
+            ]
+            
+            for path in potential_paths:
+                if path.exists() and path.is_file():
                     file_path = path
                     break
+                    
+            # Only if still not found, do a targeted search in specific directories
+            if not file_path:
+                for subdir in ["documents", "images", "metadata"]:
+                    dir_path = project_dir / subdir
+                    if dir_path.exists():
+                        # First check immediate files in this directory
+                        if (dir_path / filename).exists():
+                            file_path = dir_path / filename
+                            break
+                        # Then check one level down only (document name folders)
+                        for doc_dir in dir_path.iterdir():
+                            if doc_dir.is_dir():
+                                if (doc_dir / filename).exists():
+                                    file_path = doc_dir / filename
+                                    break
+                        if file_path:
+                            break
         
+        # Log the search result
         logger.info(f"Download request for '{filename}' in session {session_id}")
         logger.info(f"Project directory: {project_dir}")
         logger.info(f"Found file: {file_path}")
@@ -843,15 +896,51 @@ async def download_all_files(session_id: str):
         if not project_dir.exists():
             raise HTTPException(status_code=404, detail="Session not found")
         
+        # Use the session data to get files instead of recursively searching
+        # This is much more efficient than rglob
+        files_to_include = []
+        
+        # If we have session data, use it to find files directly
+        if session_id in processing_sessions:
+            session_data = processing_sessions[session_id]
+            
+            for file_info in session_data.get("files", []):
+                if file_info.get("status") == "completed" and file_info.get("output_files"):
+                    # Add all output files from this file
+                    for output_type, output_path in file_info["output_files"].items():
+                        if output_path:
+                            file_path = Path(output_path)
+                            if file_path.exists() and file_path.is_file():
+                                files_to_include.append(file_path)
+        
+        # If no files found from session data, use a targeted approach rather than rglob
+        if not files_to_include:
+            # Look in standard subdirectories
+            for subdir in ["documents", "images", "metadata"]:
+                subdir_path = project_dir / subdir
+                if subdir_path.exists():
+                    # Get all files in this subdirectory
+                    for file_path in subdir_path.glob("**/*"):
+                        if file_path.is_file():
+                            files_to_include.append(file_path)
+            
+            # If still no files, check the top level
+            if not files_to_include:
+                for file_path in project_dir.glob("*"):
+                    if file_path.is_file():
+                        files_to_include.append(file_path)
+        
         # Create a temporary ZIP file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_zip:
             with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                # Add all files from the project directory
-                for file_path in project_dir.rglob('*'):
-                    if file_path.is_file():
-                        # Create archive path relative to project directory
-                        archive_path = file_path.relative_to(project_dir)
-                        zipf.write(file_path, archive_path)
+                # Add all found files to the zip
+                for file_path in files_to_include:
+                    # Create archive path relative to project directory
+                    archive_path = file_path.relative_to(project_dir)
+                    zipf.write(file_path, archive_path)
+                    
+                # Log how many files were included
+                logger.info(f"Added {len(files_to_include)} files to ZIP archive for session {session_id}")
             
             # Return the ZIP file
             return FileResponse(
@@ -922,26 +1011,55 @@ async def get_supported_formats():
     }
 
 
-def cleanup_old_outputs():
-    """Clean up old output files and directories."""
+def cleanup_old_outputs(keep_recent=3):
+    """
+    Clean up old output files and directories.
+    
+    Args:
+        keep_recent: Number of most recent project directories to keep
+    """
     try:
         outputs_dir = Path("outputs")
         if not outputs_dir.exists():
             return
         
-        # Remove all project directories
+        # Get all project directories with their modification times
+        project_dirs = []
         for item in outputs_dir.iterdir():
             if item.is_dir() and (item.name.startswith("session_") or item.name.startswith("project_")):
+                try:
+                    # Get the most recent file modification time in this directory
+                    most_recent_time = max((f.stat().st_mtime for f in item.rglob("*") if f.is_file()), default=item.stat().st_mtime)
+                    project_dirs.append((item, most_recent_time))
+                except Exception as e:
+                    logger.warning(f"Error getting modification time for {item.name}: {e}")
+                    project_dirs.append((item, item.stat().st_mtime))
+        
+        # Sort by modification time (newest first)
+        project_dirs.sort(key=lambda x: x[1], reverse=True)
+        
+        # Keep the most recent directories, remove the rest
+        for i, (item, mtime) in enumerate(project_dirs):
+            if i >= keep_recent:
                 logger.info(f"Cleaning up project directory: {item.name}")
                 shutil.rmtree(item)
-            elif item.is_file():
+        
+        # Remove any files in the outputs directory
+        for item in outputs_dir.iterdir():
+            if item.is_file():
                 logger.info(f"Cleaning up file: {item.name}")
                 item.unlink()
         
-        # Clear in-memory sessions
-        processing_sessions.clear()
+        # Clear in-memory sessions for removed directories
+        kept_session_ids = {dir_item[0].name.replace('project_', '').replace('session_', '') 
+                           for dir_item in project_dirs[:keep_recent]}
         
-        logger.info("✅ Output cleanup completed")
+        removed_sessions = set(processing_sessions.keys()) - kept_session_ids
+        for session_id in removed_sessions:
+            if session_id in processing_sessions:
+                del processing_sessions[session_id]
+        
+        logger.info(f"✅ Output cleanup completed. Kept {min(keep_recent, len(project_dirs))} recent sessions.")
         
     except Exception as e:
         logger.error(f"❌ Cleanup failed: {str(e)}")

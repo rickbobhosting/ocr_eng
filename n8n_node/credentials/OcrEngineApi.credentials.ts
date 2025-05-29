@@ -25,26 +25,8 @@ export class OcrEngineApi implements ICredentialType {
 				password: true,
 			},
 			default: '',
-			description: 'Google Gemini API key for enhanced OCR processing (optional)',
+			description: 'Google Gemini API key for Gemini Direct OCR (required only for Gemini Direct OCR)',
 			required: false,
-		},
-		{
-			displayName: 'Ollama URL',
-			name: 'ollamaUrl',
-			type: 'string',
-			default: 'http://localhost:11434',
-			description: 'Ollama server URL for local LLM processing (optional)',
-			required: false,
-			placeholder: 'http://localhost:11434',
-		},
-		{
-			displayName: 'Ollama Model',
-			name: 'ollamaModel',
-			type: 'string',
-			default: 'gemma3:12b',
-			description: 'Ollama model to use for local LLM processing (optional)',
-			required: false,
-			placeholder: 'gemma3:12b',
 		},
 	];
 }

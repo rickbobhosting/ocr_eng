@@ -454,7 +454,25 @@ ocr_eng/
 - Implement **load balancing** for high-availability setups
 - Monitor **network bandwidth** usage
 
-### 🔮 Planned Future Improvements
+### 🔮 Recent and Planned Improvements
+
+#### ✅ Recent Performance Optimizations (May 2025)
+1. **Intelligent File Discovery**
+   - Replaced recursive file searching with targeted pattern-based lookup
+   - Added predictable path structure for faster file access
+   - Eliminated expensive filesystem operations
+
+2. **Automatic Session Management**
+   - Implemented smart session cleanup that preserves recent results
+   - Added configurable retention for processed documents
+   - Reduced filesystem overhead from accumulated files
+
+3. **Memory-Based File Tracking**
+   - Added in-memory path lookup using session data
+   - Created efficient file references for download operations
+   - Optimized ZIP archive generation with targeted file inclusion
+
+#### 🔮 Planned Future Improvements
 1. **Parallel Processing**
    - Implement batch processing for multiple files
    - Use worker pools to process files concurrently when possible
@@ -467,9 +485,9 @@ ocr_eng/
    - Add endpoint for format conversion without re-OCRing (convert existing output)
    - Implement partial document processing (specific page ranges)
 
-4. **Storage Management**
-   - Add automatic cleanup of old sessions (configurable retention period)
-   - Implement file deduplication for identical documents
+4. **Enhanced Caching**
+   - Implement document fingerprinting to avoid re-processing identical files
+   - Add multi-level caching for common document patterns
 
 5. **Performance Monitoring**
    - Add processing time metrics for each document/format
@@ -505,6 +523,13 @@ ocr_eng/
 - **Credentials**: Supports OCR Engine API, Google Cloud, and Azure
 
 ## 📋 Recent Updates
+
+### v2.3 - Performance Optimizations (May 2025)
+- **🚀 File Search Acceleration**: Replaced recursive file searching with intelligent targeted lookups
+- **⚡ Automatic Cleanup**: Added smart session management that preserves recent results while removing old files
+- **🗂️ Memory-Based File Tracking**: Implemented efficient in-memory path references for faster download operations
+- **🧩 Optimized Bulk Downloads**: Enhanced ZIP archive generation with targeted file inclusion
+- **📊 Improved File Discovery**: Added predictable path structures for more efficient file access
 
 ### v2.2 - Critical Efficiency Improvements (May 2025)
 - **🚀 Format-Specific Processing**: Fixed inefficient processing that was generating all formats regardless of user selection

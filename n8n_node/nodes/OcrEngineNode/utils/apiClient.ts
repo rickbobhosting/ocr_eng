@@ -1,6 +1,8 @@
-import { IExecuteFunctions, IHttpRequestOptions, IHttpRequestMethods } from 'n8n-workflow';
+import { IExecuteFunctions, IHttpRequestOptions, IHttpRequestMethods, IBinaryData } from 'n8n-workflow';
 import { OCREngineCredentials, ProcessingOptions, SessionStatus, OCRResult } from './types';
-import FormData from 'form-data';
+import { writeFileSync, unlinkSync, existsSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 export class OCREngineApiClient {
 	private baseUrl: string;
@@ -18,46 +20,17 @@ export class OCREngineApiClient {
 		options: ProcessingOptions,
 		credentials: OCREngineCredentials
 	): Promise<{ sessionId: string; status: SessionStatus }> {
-		const formData = new FormData();
-		formData.append('files', buffer, {
-			filename: fileName,
-			contentType: mimeType
-		});
-
-		// Add processing options to form data
-		formData.append('output_format', options.outputFormat);
-		formData.append('language', options.languages.join(','));
-
-		if (options.enhanceLlm) {
-			formData.append('enhance_llm', 'true');
-			if (options.llmProvider) {
-				formData.append('llm_provider', options.llmProvider);
-			}
-			if (options.geminiModel) {
-				formData.append('gemini_model', options.geminiModel);
-			}
+		// Validate input parameters
+		if (!buffer || buffer.length === 0) {
+			throw new Error('Invalid or empty file buffer provided');
 		}
 
-		if (options.extractImages !== undefined) {
-			formData.append('extract_images', options.extractImages.toString());
-		}
-
-		if (options.pageRange) {
-			formData.append('page_range', options.pageRange);
-		}
-
-		// Add API keys if provided
-		if (credentials.geminiApiKey) {
-			formData.append('gemini_api_key', credentials.geminiApiKey);
-		}
-
-		if (credentials.ollamaUrl) {
-			formData.append('ollama_url', credentials.ollamaUrl);
-		}
-
-		if (credentials.ollamaModel) {
-			formData.append('ollama_model', credentials.ollamaModel);
-		}
+		// Ensure buffer is a proper Buffer instance
+		const fileBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+		
+		// Ensure we have valid filename and content type
+		const safeFileName = fileName || 'document.pdf';
+		const safeContentType = mimeType || 'application/octet-stream';
 
 		// Choose the correct endpoint based on OCR engine
 		let endpoint = '/api/upload';
@@ -65,18 +38,85 @@ export class OCREngineApiClient {
 			endpoint = '/api/gemini-direct';
 		}
 
+		// Create multipart/form-data manually
+		const boundary = `----FormBoundary${Date.now()}`;
+		const parts: Buffer[] = [];
+		
+		// Helper function to add a field
+		const addField = (name: string, value: string) => {
+			parts.push(Buffer.from(`--${boundary}\r\n`));
+			parts.push(Buffer.from(`Content-Disposition: form-data; name="${name}"\r\n\r\n`));
+			parts.push(Buffer.from(`${value}\r\n`));
+		};
+
+		// Add all fields
+		addField('output_format', options.outputFormat);
+		addField('language', options.languages.join(','));
+		
+		// Add OCR engine for upload endpoint
+		if (endpoint === '/api/upload') {
+			addField('ocr_engine', options.ocrEngine);
+		}
+
+		if (options.enhanceLlm) {
+			addField('enhance_llm', 'true');
+			if (options.llmProvider) {
+				addField('llm_provider', options.llmProvider);
+			}
+			if (options.geminiModel) {
+				addField('gemini_model', options.geminiModel);
+			}
+		}
+
+		if (options.extractImages !== undefined) {
+			addField('extract_images', options.extractImages.toString());
+		}
+
+		// Add API keys if provided
+		if (credentials.geminiApiKey) {
+			addField('gemini_api_key', credentials.geminiApiKey);
+		}
+
+		if (options.llmProvider === 'ollama') {
+			// TODO: Get Ollama URL from connected model node
+			// For now, use a default URL
+			addField('ollama_base_url', 'http://localhost:11434');
+			if (options.ollamaModel) {
+				addField('ollama_model', options.ollamaModel);
+			}
+		}
+
+		// Add file
+		parts.push(Buffer.from(`--${boundary}\r\n`));
+		parts.push(Buffer.from(`Content-Disposition: form-data; name="files"; filename="${safeFileName}"\r\n`));
+		parts.push(Buffer.from(`Content-Type: ${safeContentType}\r\n\r\n`));
+		parts.push(fileBuffer);
+		parts.push(Buffer.from('\r\n'));
+		
+		// Add closing boundary
+		parts.push(Buffer.from(`--${boundary}--\r\n`));
+		
+		// Combine all parts
+		const bodyBuffer = Buffer.concat(parts);
+
 		const requestOptions: IHttpRequestOptions = {
 			method: 'POST' as IHttpRequestMethods,
 			url: `${this.baseUrl}${endpoint}`,
-			body: formData,
+			body: bodyBuffer,
 			headers: {
-				...formData.getHeaders()
+				'Content-Type': `multipart/form-data; boundary=${boundary}`,
+				'Content-Length': bodyBuffer.length.toString()
 			},
 			json: false,
-			timeout: 300000, // 5 minutes timeout
+			encoding: null as any, // Important for binary data
+			timeout: 30000 // 30 seconds timeout
 		};
 
 		try {
+			console.log('Sending request to:', requestOptions.url);
+			console.log('Request body length:', bodyBuffer.length);
+			console.log('Content-Type:', requestOptions.headers?.['Content-Type']);
+			
 			const response = await this.executeFunctions.helpers.request(requestOptions);
 			const responseData = typeof response === 'string' ? JSON.parse(response) : response;
 
@@ -89,7 +129,19 @@ export class OCREngineApiClient {
 				}
 			};
 		} catch (error: any) {
-			throw new Error(`Failed to submit OCR job: ${error.message}`);
+			console.error('Request failed:', error);
+			
+			// Handle different error types
+			if (error.code === 'ECONNRESET' || error.code === 'ECONNREFUSED') {
+				throw new Error(`OCR Engine API is not accessible at ${this.baseUrl}. Please check if the service is running.`);
+			}
+			
+			if (error.code === 'ETIMEDOUT') {
+				throw new Error(`Request timed out after ${(requestOptions.timeout || 300000) / 1000} seconds. The OCR Engine API may be overloaded.`);
+			}
+			
+			const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+			throw new Error(`Failed to submit OCR job: ${errorMessage}`);
 		}
 	}
 

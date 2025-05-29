@@ -2,36 +2,19 @@
 export interface OCREngineCredentials {
 	baseUrl: string;
 	geminiApiKey?: string;
-	ollamaUrl?: string;
-	ollamaModel?: string;
 }
 
-export interface CloudCredentials {
-	googleCloudApi?: {
-		serviceAccountKey: string;
-		projectId: string;
-	};
-	azureComputerVision?: {
-		subscriptionKey: string;
-		endpoint: string;
-	};
-}
 
 export interface ProcessingOptions {
-	ocrEngine: 'marker' | 'gemini-direct' | 'tesseract' | 'google-vision' | 'azure-vision';
+	ocrEngine: 'marker' | 'gemini-direct';
 	outputFormat: 'markdown' | 'json' | 'html' | 'pdf';
 	languages: string[];
 	enhanceLlm?: boolean;
 	llmProvider?: 'ollama' | 'gemini';
 	geminiModel?: string;
+	ollamaModel?: string;
 	extractImages?: boolean;
-	pageRange?: string;
 	confidenceThreshold?: number;
-	preprocessing?: {
-		enhanceContrast?: boolean;
-		removeNoise?: boolean;
-		detectOrientation?: boolean;
-	};
 }
 
 export interface OCRResult {

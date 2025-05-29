@@ -199,45 +199,108 @@ class MarkerOCR:
             html_file = None
             text_content = ""
             
-            # Find the output files (Marker may create subdirectories)
-            # Look for files in the session directory first, then subdirectories
-            for file_path in output_path.iterdir():
-                if file_path.is_file():
-                    if file_path.suffix == '.md' and not markdown_file:
-                        markdown_file = str(file_path)
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            text_content = f.read()
-                        logger.info(f"Found markdown file: {file_path.name}")
-                    elif file_path.suffix == '.json' and not json_file:
-                        json_file = str(file_path)
-                        if not text_content:
-                            with open(file_path, 'r', encoding='utf-8') as f:
-                                json_data = json.load(f)
-                                text_content = json_data.get('text', '')
-                        logger.info(f"Found JSON file: {file_path.name}")
-                    elif file_path.suffix == '.html' and not html_file:
-                        html_file = str(file_path)
-                        logger.info(f"Found HTML file: {file_path.name}")
+            # Use a more targeted search approach based on expected file patterns
+            # This is much faster than recursively searching all subdirectories
             
-            # If we didn't find files at the top level, search subdirectories
-            if not markdown_file and not json_file and not html_file:
-                for file_path in output_path.rglob("*"):
+            # Define expected file paths based on how Marker generates files
+            expected_paths = {
+                "markdown": [
+                    output_path / f"{input_name}.md",  # Direct in output dir
+                    output_path / input_name / f"{input_name}.md",  # In document-specific subdir
+                    output_path / "markdown" / f"{input_name}.md"  # In format-specific dir
+                ],
+                "json": [
+                    output_path / f"{input_name}.json",
+                    output_path / f"{input_name}_meta.json",
+                    output_path / input_name / f"{input_name}.json",
+                    output_path / input_name / f"{input_name}_meta.json",
+                    output_path / "json" / f"{input_name}.json"
+                ],
+                "html": [
+                    output_path / f"{input_name}.html",
+                    output_path / f"{input_name}_temp.html",
+                    output_path / input_name / f"{input_name}.html",
+                    output_path / "html" / f"{input_name}.html"
+                ]
+            }
+            
+            # Check for markdown files in expected locations
+            if not markdown_file:
+                for path in expected_paths["markdown"]:
+                    if path.exists() and path.is_file():
+                        markdown_file = str(path)
+                        with open(path, 'r', encoding='utf-8') as f:
+                            text_content = f.read()
+                        logger.info(f"Found markdown file: {path.name}")
+                        break
+            
+            # Check for JSON files in expected locations
+            if not json_file:
+                for path in expected_paths["json"]:
+                    if path.exists() and path.is_file():
+                        json_file = str(path)
+                        if not text_content:
+                            with open(path, 'r', encoding='utf-8') as f:
+                                try:
+                                    json_data = json.load(f)
+                                    text_content = json_data.get('text', '')
+                                except json.JSONDecodeError:
+                                    # If JSON is invalid, just read as text
+                                    f.seek(0)
+                                    text_content = f.read()
+                        logger.info(f"Found JSON file: {path.name}")
+                        break
+            
+            # Check for HTML files in expected locations
+            if not html_file:
+                for path in expected_paths["html"]:
+                    if path.exists() and path.is_file():
+                        html_file = str(path)
+                        logger.info(f"Found HTML file: {path.name}")
+                        break
+                        
+            # If files still not found, check top level files
+            if not (markdown_file or json_file or html_file):
+                # Look only in the direct output directory
+                for file_path in output_path.iterdir():
                     if file_path.is_file():
                         if file_path.suffix == '.md' and not markdown_file:
                             markdown_file = str(file_path)
                             with open(file_path, 'r', encoding='utf-8') as f:
                                 text_content = f.read()
-                            logger.info(f"Found markdown file in subdir: {file_path.name}")
+                            logger.info(f"Found markdown file: {file_path.name}")
                         elif file_path.suffix == '.json' and not json_file:
                             json_file = str(file_path)
                             if not text_content:
                                 with open(file_path, 'r', encoding='utf-8') as f:
                                     json_data = json.load(f)
                                     text_content = json_data.get('text', '')
-                            logger.info(f"Found JSON file in subdir: {file_path.name}")
+                            logger.info(f"Found JSON file: {file_path.name}")
                         elif file_path.suffix == '.html' and not html_file:
                             html_file = str(file_path)
-                            logger.info(f"Found HTML file in subdir: {file_path.name}")
+                            logger.info(f"Found HTML file: {file_path.name}")
+            
+            # Only if still not found, search document-specific subdirectories (one level only)
+            if not (markdown_file or json_file or html_file):
+                document_dir = output_path / input_name
+                if document_dir.exists() and document_dir.is_dir():
+                    for file_path in document_dir.iterdir():
+                        if file_path.is_file():
+                            if file_path.suffix == '.md' and not markdown_file:
+                                markdown_file = str(file_path)
+                                with open(file_path, 'r', encoding='utf-8') as f:
+                                    text_content = f.read()
+                                logger.info(f"Found markdown file in document dir: {file_path.name}")
+                            elif file_path.suffix == '.json' and not json_file:
+                                json_file = str(file_path)
+                                if not text_content:
+                                    with open(file_path, 'r', encoding='utf-8') as f:
+                                        json_data = json.load(f)
+                                        text_content = json_data.get('text', '')
+                                logger.info(f"Found JSON file in document dir: {file_path.name}")
+                            elif file_path.suffix == '.html' and not html_file:
+                                html_file = str(file_path)
+                                logger.info(f"Found HTML file in document dir: {file_path.name}")
             
             # If we still didn't find any output files, create a basic one for the requested format
             if not markdown_file and not json_file and not html_file:
@@ -260,12 +323,33 @@ class MarkerOCR:
                         f.write(text_content)
                     logger.info(f"Created fallback Markdown file: {markdown_file}")
             
-            # Find extracted images
+            # Find extracted images - use a more targeted approach
             images = []
-            for img_path in output_path.rglob("*.png"):
-                images.append(str(img_path))
-            for img_path in output_path.rglob("*.jpg"):
-                images.append(str(img_path))
+            
+            # Define likely image locations
+            image_locations = [
+                output_path,                          # Direct in output directory
+                output_path / "images",               # In images directory
+                output_path / input_name,             # In document-specific directory
+                output_path / input_name / "images"   # In document's images directory
+            ]
+            
+            # Only search in these specific locations instead of recursively
+            for location in image_locations:
+                if location.exists() and location.is_dir():
+                    # Check for png images
+                    for img_path in location.glob("*.png"):
+                        if img_path.is_file():
+                            images.append(str(img_path))
+                    
+                    # Check for jpg images
+                    for img_path in location.glob("*.jpg"):
+                        if img_path.is_file():
+                            images.append(str(img_path))
+                            
+                    # If we found images in this location, no need to check others
+                    if images:
+                        break
             
             # Generate additional formats only if explicitly requested
             pdf_file = None
