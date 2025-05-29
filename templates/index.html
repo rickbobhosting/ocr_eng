@@ -992,21 +992,35 @@
                     fileDiv.className = 'mb-2 p-2 border rounded';
                     
                     let links = '';
+                    // Only show download buttons for formats that were actually generated
+                    const requestedFormat = status.settings.output_format;
+                    
+                    // For Markdown format (show only if generated and either requested or needed for PDF)
                     if (file.output_files && file.output_files.markdown) {
                         const mdFileName = file.output_files.markdown.split('/').pop();
-                        links += `<a href="/api/sessions/${currentSessionId}/download/${mdFileName}" class="btn btn-sm btn-outline-primary me-1" download>MD</a>`;
+                        const mdSize = file.file_sizes && file.file_sizes.markdown ? formatFileSize(file.file_sizes.markdown) : '';
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${mdFileName}" class="btn btn-sm btn-outline-primary me-1" title="Size: ${mdSize}" download>MD ${mdSize ? `(${mdSize})` : ''}</a>`;
                     }
-                    if (file.output_files && file.output_files.json) {
+                    
+                    // For JSON format (show only if generated and requested)
+                    if (file.output_files && file.output_files.json && requestedFormat === 'json') {
                         const jsonFileName = file.output_files.json.split('/').pop();
-                        links += `<a href="/api/sessions/${currentSessionId}/download/${jsonFileName}" class="btn btn-sm btn-outline-info me-1" download>JSON</a>`;
+                        const jsonSize = file.file_sizes && file.file_sizes.json ? formatFileSize(file.file_sizes.json) : '';
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${jsonFileName}" class="btn btn-sm btn-outline-info me-1" title="Size: ${jsonSize}" download>JSON ${jsonSize ? `(${jsonSize})` : ''}</a>`;
                     }
-                    if (file.output_files && file.output_files.html) {
+                    
+                    // For HTML format (show only if generated and either requested or needed for PDF)
+                    if (file.output_files && file.output_files.html && (requestedFormat === 'html' || requestedFormat === 'pdf')) {
                         const htmlFileName = file.output_files.html.split('/').pop();
-                        links += `<a href="/api/sessions/${currentSessionId}/download/${htmlFileName}" class="btn btn-sm btn-outline-success me-1" download>HTML</a>`;
+                        const htmlSize = file.file_sizes && file.file_sizes.html ? formatFileSize(file.file_sizes.html) : '';
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${htmlFileName}" class="btn btn-sm btn-outline-success me-1" title="Size: ${htmlSize}" download>HTML ${htmlSize ? `(${htmlSize})` : ''}</a>`;
                     }
-                    if (file.output_files && file.output_files.pdf) {
+                    
+                    // For PDF format (show only if generated and requested)
+                    if (file.output_files && file.output_files.pdf && requestedFormat === 'pdf') {
                         const pdfFileName = file.output_files.pdf.split('/').pop();
-                        links += `<a href="/api/sessions/${currentSessionId}/download/${pdfFileName}" class="btn btn-sm btn-outline-danger me-1" download>PDF</a>`;
+                        const pdfSize = file.file_sizes && file.file_sizes.pdf ? formatFileSize(file.file_sizes.pdf) : '';
+                        links += `<a href="/api/sessions/${currentSessionId}/download/${pdfFileName}" class="btn btn-sm btn-outline-danger me-1" title="Size: ${pdfSize}" download>PDF ${pdfSize ? `(${pdfSize})` : ''}</a>`;
                     }
                     
                     fileDiv.innerHTML = `
@@ -1018,7 +1032,8 @@
                             <small class="text-muted">
                                 Processing time: ${file.processing_time || 'N/A'} | 
                                 Pages: ${file.pages_processed || 'N/A'} | 
-                                Images: ${file.images_extracted || 0}
+                                Images: ${file.images_extracted || 0} |
+                                Size: ${formatFileSize(file.size || 0)}
                             </small>
                         </div>
                     `;

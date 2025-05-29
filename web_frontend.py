@@ -402,10 +402,11 @@ async def gemini_direct_ocr(
 @app.post("/api/upload")
 async def upload_files(
     background_tasks: BackgroundTasks,
+    request: Request,
     files: List[UploadFile] = File(...),
     output_format: Optional[str] = Form(default="markdown"),
     use_llm: Optional[bool] = Form(default=False),
-    extract_images: Optional[bool] = Form(default=True),
+    extract_images: Optional[str] = Form(default="false"),  # Changed to string to properly handle checkbox
     max_pages: Optional[str] = Form(default=""),
     llm_provider: Optional[str] = Form(default="ollama"),
     processing_method: Optional[str] = Form(default="marker"),
@@ -430,8 +431,17 @@ async def upload_files(
         gemini_model: Gemini model name
     """
     try:
+        # Parse the extract_images value properly from form data (checkbox sends "true" when checked)
+        extract_images_bool = False
+        if extract_images and extract_images.lower() in ("true", "on", "yes", "1"):
+            extract_images_bool = True
+        
         logger.info(f"Upload request received with {len(files)} files")
-        logger.info(f"Parameters: format={output_format}, llm={use_llm}, provider={llm_provider}, extract_images={extract_images}, max_pages='{max_pages}'")
+        logger.info(f"Parameters: format={output_format}, llm={use_llm}, provider={llm_provider}, extract_images={extract_images_bool}, max_pages='{max_pages}'")
+        
+        # Log raw form data for debugging
+        form_data = await request.form()
+        logger.info(f"Raw form data extract_images value: {form_data.get('extract_images')}")
         
         # Convert max_pages string to int, handling empty values
         max_pages_int = None
@@ -467,7 +477,7 @@ async def upload_files(
                 "output_format": output_format,
                 "use_llm": use_llm,
                 "llm_provider": llm_provider,
-                "extract_images": extract_images,
+                "extract_images": extract_images_bool,
                 "max_pages": max_pages_int,
                 "ollama_url": ollama_url,
                 "ollama_model": ollama_model,
@@ -504,7 +514,7 @@ async def upload_files(
             output_format,
             use_llm,
             llm_provider,
-            extract_images,
+            extract_images_bool,  # Pass the boolean value, not the string
             max_pages_int,
             ollama_url,
             ollama_model,
@@ -559,11 +569,14 @@ async def process_files_background(
                     "pdf_path": filepath,
                     "output_dir": str(documents_dir),  # Output to documents directory
                     "output_format": output_format,  # Only generate this format
-                    "extract_images": extract_images,
+                    "extract_images": extract_images,  # extract_images is already a boolean in this function
                     "max_pages": max_pages,
                     "images_dir": str(images_dir),  # Extract images to images directory
                     "organized_output": True  # Enable organized output structure
                 }
+                
+                # Log the actual extract_images value to verify it's correct
+                logger.info(f"Processing {filename} with extract_images={extract_images}")
                 
                 # Add LLM options if enabled
                 if use_llm:
@@ -586,6 +599,23 @@ async def process_files_background(
                 result = ocr_engine.convert_pdf(**processing_options)
                 
                 if result['success']:
+                    # Get file size information
+                    file_sizes = {}
+                    for output_type, file_path in {
+                        "markdown": result.get('markdown_file'),
+                        "json": result.get('json_file'),
+                        "html": result.get('html_file') if not (result.get('html_file', '').endswith('_temp.html')) else None,
+                        "pdf": result.get('pdf_file')
+                    }.items():
+                        if file_path:
+                            try:
+                                file_sizes[output_type] = Path(file_path).stat().st_size
+                            except:
+                                file_sizes[output_type] = 0
+                    
+                    # Get the original file size for reference
+                    original_size = Path(filepath).stat().st_size
+                    
                     file_result = {
                         "filename": filename,
                         "status": "completed",
@@ -597,6 +627,8 @@ async def process_files_background(
                             "html": result.get('html_file') if not (result.get('html_file', '').endswith('_temp.html')) else None,
                             "pdf": result.get('pdf_file')
                         },
+                        "file_sizes": file_sizes,
+                        "size": original_size,
                         "images_extracted": len(result.get('images', [])),
                         "metadata": result.get('metadata', {})
                     }

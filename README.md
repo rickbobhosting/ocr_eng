@@ -454,6 +454,35 @@ ocr_eng/
 - Implement **load balancing** for high-availability setups
 - Monitor **network bandwidth** usage
 
+### 🔮 Planned Future Improvements
+1. **Parallel Processing**
+   - Implement batch processing for multiple files
+   - Use worker pools to process files concurrently when possible
+
+2. **Resource Optimization**
+   - Add memory limits to prevent large documents from causing crashes
+   - Implement automatic scaling of image resolution based on available resources
+
+3. **API Refinements**
+   - Add endpoint for format conversion without re-OCRing (convert existing output)
+   - Implement partial document processing (specific page ranges)
+
+4. **Storage Management**
+   - Add automatic cleanup of old sessions (configurable retention period)
+   - Implement file deduplication for identical documents
+
+5. **Performance Monitoring**
+   - Add processing time metrics for each document/format
+   - Create a dashboard for system performance monitoring
+
+6. **Error Handling Improvements**
+   - Better recovery from partial failures during processing
+   - Queue failed jobs for retry with exponential backoff
+
+7. **Configuration Flexibility**
+   - Allow per-session configuration of OCR parameters
+   - Save configurations as presets for quick reuse
+
 ## 🔧 Development Notes
 
 ### Directory Structure
@@ -476,6 +505,13 @@ ocr_eng/
 - **Credentials**: Supports OCR Engine API, Google Cloud, and Azure
 
 ## 📋 Recent Updates
+
+### v2.2 - Critical Efficiency Improvements (May 2025)
+- **🚀 Format-Specific Processing**: Fixed inefficient processing that was generating all formats regardless of user selection
+- **⚡ Extract Images Toggle Fix**: Resolved issue where images were being extracted despite user toggling it off
+- **🗂️ Optimized Folder Structure**: Implemented more efficient storage organization for processed files
+- **🧩 UI Enhancement**: Updated interface to only show download options for generated file types
+- **📊 Processing Metrics**: Added file size information and processing time to download links
 
 ### v2.1 - Processing Efficiency Improvements (May 2025)
 - **🚀 Optimized Output Generation**: Fixed inefficient processing that was generating HTML and PDF files even when only Markdown was requested

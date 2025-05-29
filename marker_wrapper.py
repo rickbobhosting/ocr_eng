@@ -139,16 +139,19 @@ class MarkerOCR:
             # Build CLI command
             cmd = ['marker_single', input_path, '--output_dir', output_dir]
             
-            # Add output format
+            # Add output format - ONLY generate the requested format
             if output_format == "json":
                 cmd.extend(['--output_format', 'json'])
             elif output_format == "html":
                 cmd.extend(['--output_format', 'html'])
             elif output_format == "pdf":
-                # Generate markdown first, then convert to PDF
+                # For PDF, we need markdown first, then convert to PDF
                 cmd.extend(['--output_format', 'markdown'])
             else:  # default to markdown
                 cmd.extend(['--output_format', 'markdown'])
+                
+            # Note: We can't disable other outputs with CLI flags directly
+            # We'll have to handle this by cleaning up unwanted files after processing
             
             # Add image extraction setting
             if not extract_images:
@@ -236,6 +239,27 @@ class MarkerOCR:
                             html_file = str(file_path)
                             logger.info(f"Found HTML file in subdir: {file_path.name}")
             
+            # If we still didn't find any output files, create a basic one for the requested format
+            if not markdown_file and not json_file and not html_file:
+                logger.warning(f"No output files found after processing {input_path}")
+                
+                # Create a minimal output file based on requested format
+                input_name = Path(input_path).stem
+                if output_format == "json":
+                    json_file = str(output_path / f"{input_name}.json")
+                    json_content = {"text": "OCR processing produced no output", "error": "No text extracted"}
+                    with open(json_file, 'w', encoding='utf-8') as f:
+                        json.dump(json_content, f, indent=2)
+                    text_content = "OCR processing produced no output"
+                    logger.info(f"Created fallback JSON file: {json_file}")
+                else:
+                    # Default to markdown for any other format
+                    markdown_file = str(output_path / f"{input_name}.md")
+                    text_content = "OCR processing produced no output"
+                    with open(markdown_file, 'w', encoding='utf-8') as f:
+                        f.write(text_content)
+                    logger.info(f"Created fallback Markdown file: {markdown_file}")
+            
             # Find extracted images
             images = []
             for img_path in output_path.rglob("*.png"):
@@ -247,20 +271,69 @@ class MarkerOCR:
             pdf_file = None
             input_name = Path(input_path).stem
             
+            # Organize output files by format if requested
+            if organized_output:
+                # Create format-specific directories only if needed
+                if output_format == "pdf":
+                    pdf_dir = Path(output_dir) / "pdf"
+                    pdf_dir.mkdir(exist_ok=True)
+                    
+                if output_format == "html" or output_format == "pdf":
+                    html_dir = Path(output_dir) / "html"
+                    html_dir.mkdir(exist_ok=True)
+            
             # Only generate PDF if specifically requested
             if output_format == "pdf":
                 if html_file:
                     # Use existing HTML file
-                    pdf_file = self._generate_pdf_from_html(html_file, output_dir, input_name)
+                    pdf_output_dir = str(Path(output_dir) / "pdf") if organized_output else output_dir
+                    pdf_file = self._generate_pdf_from_html(html_file, pdf_output_dir, input_name)
                 elif markdown_file:
                     # Convert markdown to HTML then to PDF
-                    temp_html = self._markdown_to_html(markdown_file, output_dir, input_name)
+                    html_output_dir = str(Path(output_dir) / "html") if organized_output else output_dir
+                    temp_html = self._markdown_to_html(markdown_file, html_output_dir, input_name)
                     if temp_html:
-                        pdf_file = self._generate_pdf_from_html(temp_html, output_dir, input_name)
+                        pdf_output_dir = str(Path(output_dir) / "pdf") if organized_output else output_dir
+                        pdf_file = self._generate_pdf_from_html(temp_html, pdf_output_dir, input_name)
             
             # Only generate HTML if not already created and specifically needed
             if not html_file and output_format == "html" and markdown_file:
-                html_file = self._markdown_to_html(markdown_file, output_dir, input_name)
+                html_output_dir = str(Path(output_dir) / "html") if organized_output else output_dir
+                html_file = self._markdown_to_html(markdown_file, html_output_dir, input_name)
+            
+            # Clean up files that weren't requested
+            if output_format != "json" and json_file:
+                try:
+                    Path(json_file).unlink()
+                    logger.info(f"Removed unrequested JSON file: {json_file}")
+                    json_file = None
+                except Exception as e:
+                    logger.warning(f"Error removing JSON file: {e}")
+                    
+            if output_format != "html" and output_format != "pdf" and html_file:
+                try:
+                    Path(html_file).unlink()
+                    logger.info(f"Removed unrequested HTML file: {html_file}")
+                    html_file = None
+                except Exception as e:
+                    logger.warning(f"Error removing HTML file: {e}")
+            
+            # If extract_images is False but images were extracted anyway, clean them up
+            if not extract_images and images:
+                # First filter out the original input file from the images list
+                input_path_str = str(Path(input_path))
+                filtered_images = [img for img in images if img != input_path_str]
+                
+                # Now remove only the extracted images, not the input file
+                for img_path in filtered_images:
+                    try:
+                        Path(img_path).unlink()
+                        logger.info(f"Removed unrequested image: {img_path}")
+                    except Exception as e:
+                        logger.warning(f"Error removing image file: {e}")
+                
+                # Clear the images list
+                images = []
             
             return {
                 "success": True,
