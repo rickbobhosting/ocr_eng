@@ -5,12 +5,9 @@ const path = require('path');
 const tsProject = ts.createProject('tsconfig.json');
 
 function buildTypeScript() {
-  const compiled = tsProject.src().pipe(tsProject());
-  
-  return gulp.parallel(
-    () => compiled.dts.pipe(gulp.dest('dist')),
-    () => compiled.js.pipe(gulp.dest('dist'))
-  )();
+  return tsProject.src()
+    .pipe(tsProject())
+    .pipe(gulp.dest('dist'));
 }
 
 function copyAssets() {
